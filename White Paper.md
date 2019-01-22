@@ -5,10 +5,9 @@
 The intent of the project is to create an Arduino-centered setup, which converts audio input from multiple microphones into a corresponding visual output. 
 The main use case for this setup would be to allow a band to have a (simple) live light show, without having to pre-program or use a click track. Optimally one would only have to place two or three microphones - specific to the Arduino - to pick up audio from different instruments. The audio signal captured by those microphones would then be used by the Arduino to control a remote LED-setup.
 
-### Current Group
+### Group
 
 - Kevin Iatauro
-- Karl Lund
 - Marcus Rossel
 - Trym Staurheim
 

@@ -8,9 +8,9 @@ The scripts and programs in this folder are used for the purpose of configuring,
 
 ---
 
-### `pass_arduino_path.sh`
+### `arduino_path.sh`
 This script is used to get the file path of the device representing the Arduino. 
-Currently it can only pass that path to a program provided as command line argument, but the ultimate goal is to simply print it to `stdout`, in order to allow for piping.
+It simply scans the `/dev` folder for devices that could possibly represent the Arduino. If there are multiple options, it prompts the user to select which device should be used. The path of the chosen devices is then printed to `stdout`.
 
 --- 
 
