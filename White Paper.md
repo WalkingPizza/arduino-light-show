@@ -53,6 +53,13 @@ The main use case for this setup would be to allow a band to have a (simple) liv
 
 9. Allow the user to save different calibration-profiles.
 
+###### About step 2:
+Hooking up multiple microphones will probably require a higher voltage, than the one put out by the Arduino. For this purpose we could hook up a 9V battery. The Arduino starter kit supplies accessories needed for this (e.g. a transistor or optocoupler).
+
 ###### About step 5:
 
 Since most RF-transmitters are also receivers, we should just be able to send all of the different types of signals from the outlet's remote, and record their signature. Then we know what patterns we have to send, to simulate the remote.
+
+###### About step 6:
+
+As the Arduino only has 32kB of program memory, it might not be possible to fit the converter onto the Arduino itself. In this case we would have to use the Arduino's RS-232 serial communication to send the data collected by the Arduino to a computer, perform the conversion there, and send the RF-transmitter directives back.
