@@ -1,45 +1,22 @@
 #!/bin/bash
 
+# Import testing utilities.
+. ./utilities.sh
+
 
 #-Constant-Declarations-------------------------#
 
-# Turns on alias expansion explicitly, as the shell will be non-interactive.
-shopt -s expand_aliases
-# Creates a convenience alias for the `report_exit_status_assertion` function.
-alias report_if_status_is='report_exit_status_assertion $LINENO '
 
 declare -r test_command='../generate_threshold_configuration_file.sh'
 declare -r test_ino_file='test_GTCF_ino_file.ino'
 declare -r test_configuration_file='test_GTCF_threshold_configuration'
-
-
-#-Functions-------------------------------------#
-
-
-# Runs a given command while removing all of its output to stdout and stderr. `$?` remains the same.
-function silent {
-   $@ &> /dev/null
-   return $?
-}
-
-# Takes a test-identifier, an expected exit status and optionally an explicit last exit status
-# (otherwise `$?` is used). This function prints a description, representing the success status of
-# a test with the given identifier.
-function report_exit_status_assertion {
-   # Takes the last exit status as `exit_status`, unless one is explicitly provided as `$3`.
-   local -i exit_status=$?; if [ -n "$3" ]; then exit_status=$3; fi
-
-   if [ $exit_status -eq "$2" ]; then
-      echo -e "> Test[$1]\tOK"
-   else
-      echo -e "> Test[$1]\tNO: Expected exit status $2, but got $exit_status"
-   fi
-}
+declare -r test_directory='test_GTCF_directory'
 
 
 #-Test-Setup------------------------------------#
 
 
+echo "* Testing \``basename $test_command`\` in \`${BASH_SOURCE##*/}\`:"
 touch $test_ino_file
 
 
@@ -81,8 +58,15 @@ report_if_status_is 0
 
 # Test: Configuration file creation
 
-# TODO: Implement
+# Creates the test directory without read and write permissions.
+mkdir $test_directory
+chmod -rw $test_directory
 
+silent $test_command $test_ino_file "$test_directory/$test_configuration_file"
+report_if_status_is 4
+
+# Restores the test directory's read and write permissions.
+chmod +rw $test_directory
 
 
 # Test: Duplicate microphone identifiers
@@ -94,7 +78,7 @@ cat << END > $test_ino_file
 END
 
 silent $test_command $test_ino_file $test_configuration_file
-report_if_status_is 4
+report_if_status_is 5
 
 
 # Test: Malformed declaration body
@@ -108,7 +92,7 @@ int b = 2;
 END
 
 silent $test_command $test_ino_file $test_configuration_file
-report_if_status_is 5
+report_if_status_is 6
 
 
 # Test: Perfect `.ino`-file
@@ -123,14 +107,8 @@ END
 
 silent $test_command $test_ino_file $test_configuration_file
 
-# Performs some more elaborate success testing.
-exit_status=$?
-expected_result=$'A: 1\nB: 2'
-if [ "`cat $test_configuration_file`" != "$expected_result" ]; then
-   echo -e "> Test[$LINENO]\tNO: Expected different output to configuration file"
-else
-   report_if_status_is 0 $exit_status
-fi
+output=`cat $test_configuration_file`
+report_if_output_matches "$output" $'A: 1\nB: 2'
 
 
 # Test: Messy `.ino`-file
@@ -161,14 +139,8 @@ END
 
 silent $test_command $test_ino_file $test_configuration_file
 
-# Performs some more elaborate success testing.
-exit_status=$?
-expected_result=$'#threshold #1: 1\nvalid threshold: 0123456789'
-if [ "`cat $test_configuration_file`" != "$expected_result" ]; then
-   echo -e "> Test[$LINENO]\tNO: Expected different output to configuration file"
-else
-   report_if_status_is 0 $exit_status
-fi
+output=`cat $test_configuration_file`
+report_if_output_matches "$output" $'#threshold #1: 1\nvalid threshold: 0123456789'
 
 
 #-Test-Cleanup------------------------------------#
@@ -176,3 +148,4 @@ fi
 
 silent rm $test_ino_file
 silent rm $test_configuration_file
+rm -r $test_directory

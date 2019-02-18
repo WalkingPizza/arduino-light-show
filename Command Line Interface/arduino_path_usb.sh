@@ -24,7 +24,13 @@
 #-Constants-------------------------------------#
 
 
-declare -r dont_know_option='I do not know'
+if [ -n "$1" ]; then
+   declare -r device_folder=${1%/};
+else
+   declare -r device_folder='/dev'
+fi
+
+declare -r dont_know_option="I don't know"
 declare -r quit_option='Quit'
 
 
@@ -46,13 +52,10 @@ function merge_tty_onto_cu {
       # Removes the "tty"-prefix from the device's name.
       local device_without_prefix=${tty_device:3}
 
-      # Determines whether there are matching "cu"-devices for the "tty"-device in the set of
-      # possible devices.
-      matched_devices=`egrep -c "^cu$device_without_prefix" <<< "$possible_devices"`
-
       # If there is no matching "cu"-device, the "tty"-device is added to the set of possible
       # devices.
-      if [ $matched_devices -eq 0 ]; then
+      egrep -q "^cu$device_without_prefix" <<< "$possible_devices"
+      if [ $? -eq 0 ]; then
          possible_devices="$possible_devices tty$device_without_prefix"
       fi
    done
@@ -65,42 +68,46 @@ function merge_tty_onto_cu {
 #-Main-Program----------------------------------#
 
 
-# Gets all of the devices in the `/dev` folder, seperated by newlines.
-# TODO: Change this back to the `/dev` folder
-devices=`ls -1 'devices'`
+# Asserts that the given path is a directory.
+if [ ! -d "$device_folder" ]; then
+   echo "Error: \`$device_folder\` is not a valid directory path" >&2
+   exit 1
+fi
 
-# Filters the `devices` for the lines, which contain the substring "usb" (case insensitive).
-usb_devices=`egrep -i -e 'usb' <<< "$devices"`
+# Gets all of the files (devices) in the the device-folder.
+devices=`ls -1 "$device_folder"`
 
-# Exits on an exit status of `1` if no potential Arduino-device was found.
-if [ -z "$usb_devices" ]; then exit 1; fi
+# Filters the devices for those, which contain the substring "usb" (case insensitive).
+usb_devices=`egrep -i 'usb' <<< "$devices"`
+
+# Prints an error message and exits if no potential Arduino-device was found.
+if [ -z "$usb_devices" ]; then
+   echo "Error: no potential Arduino-device detected in \`$device_folder\`" >&2
+   exit 2
+fi
 
 # Merges "cu"- and "tty"-devices.
 possible_devices=`merge_tty_onto_cu "$usb_devices"`
 
-# Only prompts the user to choose a device if there are multiple possible devices.
-if [ `wc -l <<< "$possible_devices"` -gt 1 ]; then
-   # Creates the list of options the user can select.
-   # BUGGY:
-   select_options=("${possible_devices[@]}" "$dont_know_option" "$quit_option")
+# Prints out the possible device to stdout, if there only is one.
+[ `wc -l <<< "$possible_devices"` -gt 1 ] || { echo "$device_folder/$possible_devices"; exit 0; }
 
-   # Prompts the user to choose the Arduino's port or another action.
-   PS3="Arduino's port: "
-   select selection in $select_options; do
-      # Either exits the program on reason-specific exit codes, or sets the selected device-path.
-      case "$selection" in
-         "$dont_know_option")
-            exit 1 ;;
-         "$quit_option")
-            exit 2 ;;
-         *)
-            device_path="/dev/$selection"
-            break ;;
-      esac
-   done
-else
-   device_path="/dev/$possible_devices"
-fi
+# Creates the list of options the user can select.
+select_options=`echo -e "$possible_devices\n$dont_know_option\n$quit_option"`
+
+# Sets up the conditions nessecary for the following select-statement.
+PS3="> "; IFS=$'\n'
+
+# Prompts the user to choose the Arduino's port or another action.
+echo "Choose the Arduino's port or another option:" >&2
+select selection in $select_options; do
+   # Either exits the program on reason-specific exit codes, or sets the selected device-path.
+   case "$selection" in
+      $dont_know_option) exit 1 ;;
+           $quit_option) exit 2 ;;
+                      *) device_path="$device_folder/$selection"; break ;;
+   esac
+done
 
 # Prints the selected device's path to stdout and exits the script successfully.
 echo "$device_path"

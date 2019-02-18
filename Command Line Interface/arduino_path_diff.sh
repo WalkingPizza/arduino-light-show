@@ -1,19 +1,10 @@
 #!/bin/bash
 
-# This script scans the `/dev` folder for any devices that contain "usb" in their name. It lets the
-# user choose which of the devices represents an Arduino, and prints the selected device's path to
-# stdout.
-# The user also has the option to state that they don't know which is the correct device, or to
-# simply quit the command.
-#
-# If there is only one device containing the "usb"-substring, it is assumed to be the correct one,
-# so the user is not asked to choose a device.
-#
-# If there are multiple devices differing only in the prefix "cu" or "tty", the "tty"-version is
-# filtered out.
-# Explanations:
-# * https://stackoverflow.com/questions/8632586
-# * https://learn.sparkfun.com/tutorials/terminal-basics/tips-and-tricks
+# This script prompts the user to briefly un- and then replug the Arduino. By monitoring the '/dev'
+# folder, it should therefore be possible to track, which device was added (which would then be the
+# Arduino).
+# If a suitable device was detected, its path is printed to stdout. Otherwise the program exits on a
+# non-zero exit status.
 #
 # Exit status:
 # 0: An Arduino-device was found an printed to stdout.
@@ -22,6 +13,13 @@
 
 
 #-Constants-------------------------------------#
+
+
+if [ -n "$1" ]; then
+   declare -r device_folder=${1%/};
+else
+   declare -r device_folder='/dev'
+fi
 
 
 #-Functions-------------------------------------#

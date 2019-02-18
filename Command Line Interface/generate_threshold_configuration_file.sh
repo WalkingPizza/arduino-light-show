@@ -25,7 +25,6 @@
 #-Constant-Declarations-------------------------#
 
 
-# TODO: Determine the final position of the threshold-configuration file.
 declare -r script_name=${BASH_SOURCE##*/}
 declare -r ino_file=$1
 
@@ -45,18 +44,6 @@ declare -r body_pattern="$line_number_pattern$const_int_pattern"
 
 #-Functions-------------------------------------#
 
-
-# Creates or empties the threshold-configuration file if one already exists.
-function initialize_configuration_file {
-   # Creates intermediate directories if they don't already exist.
-   mkdir -p "`dirname "$configuration_file"`" &> /dev/null
-
-   # Creates the file if it doesn't already exist.
-   touch "`basename "$configuration_file"`"
-
-   # Empties the file.
-   > "$configuration_file"
-}
 
 # This function takes a file path. Aborts the program if the given string does not actually point to
 # an existing `.ino`-file.
@@ -81,6 +68,27 @@ function abort_on_bad_path_ {
 
    return 0 # Exiting convention
 }
+
+# Creates or empties the threshold-configuration file if one already exists.
+function initialize_configuration_file_ {
+   # Creates intermediate directories if they don't already exist.
+   mkdir -p "`dirname "$configuration_file"`" &> /dev/null
+
+   # Creates the file if it doesn't already exist.
+   touch "`basename "$configuration_file"`" &> /dev/null
+
+   # Aborts if the file could not be created, or isn't read- and writable.
+   if ! [ -f "$configuration_file" -a -r "$configuration_file" -a -w "$configuration_file" ]; then
+      echo "Error: \`$configuration_file\` could not be created" >&2
+      exit 4
+   fi
+
+   # Empties the file.
+   > "$configuration_file"
+
+   return 0 # Exiting convention
+}
+
 
 # This function takes a regex-pattern and a line numbered `.ino`-program. It prints the successors
 # of all of the lines in the program, matching the regex-pattern.
@@ -113,7 +121,7 @@ function abort_on_duplicate_identifiers_ {
 
    # TODO: Print an error message for each duplicate identifier.
 
-   exit 4
+   exit 5
 }
 
 # This functions takes a list of body candidates. For every malformed body it prints an error to
@@ -129,7 +137,7 @@ function abort_on_malformed_bodies_ {
          echo "Error: \`$ino_file\` line $line_number: Malformed threshold-declaration body" >&2
       done <<< "$malformed_declaration_bodies"
 
-      exit 5
+      exit 6
    fi
 
    return 0 # Exiting convention
@@ -193,10 +201,10 @@ threshold_values=`get_threshold_values_ "$numbered_ino_program"` || exit $?
 if [ `wc -l <<< "$microphone_identifiers"` -ne `wc -l <<< "$threshold_values"` ]; then
    echo "Error: \`$script_name\` found different numbers of microphone-identifiers" \
         "and threshold-values" >&2
-   exit 6
+   exit 7
 fi
 
-initialize_configuration_file
+initialize_configuration_file_
 
 # Merges the threshold configuration items into joined lines.
 threshold_configuration=`paste -d ':' <(echo "$microphone_identifiers") <(echo "$threshold_values")`
