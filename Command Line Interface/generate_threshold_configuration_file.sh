@@ -15,6 +15,16 @@
 # The generated threshold-configuration file contains a sequence of lines of the form:
 #
 # <microphone_identifier>: <integer-literal>
+#
+# Exit status:
+# * 0: A threshold-configuration file could successfully be generated.
+# * 1: No program-file was given as argument
+# * 2: The given program-file path is invalid or not readable
+# * 3: The given program-file path is not a `.ino`-file
+# * 4: The threshold-configuration file could not be created at the given path
+# * 5: Duplicate microphone-identifiers were detected in the `.ino`-file
+# * 6: Malformed threshold-declaration bodies were detected in the `.ino`-file
+# * 7: Program-internal error
 
 # Exiting convention:
 # Functions whose names contain a trailing underscore, require exiting the script on non-zero exit
@@ -54,9 +64,9 @@ function abort_on_bad_path_ {
       exit 1
    fi
 
-   # Aborts if the given string is not a path to an exiting file.
-   if [ ! -f "$1" ]; then
-      echo "Error: \`$script_name\` expects an existing file as argument" >&2
+   # Aborts if the given string is not a path to an exiting readable file.
+   if ! [ -f "$1" -a -r "$1" ]; then
+      echo "Error: \`$script_name\` expects an existing readable file as argument" >&2
       exit 2
    fi
 
@@ -211,3 +221,4 @@ threshold_configuration=`paste -d ':' <(echo "$microphone_identifiers") <(echo "
 
 # Writes the (formatted) current threshold-configuration to the configuration file.
 sed -e 's/:/: /' <<< "$threshold_configuration" > "$configuration_file"
+exit 0

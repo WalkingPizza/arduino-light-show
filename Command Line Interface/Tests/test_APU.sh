@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Import testing utilities.
-. ./utilities.sh
+. utilities.sh
 
 
 #-Constant-Declarations-------------------------#
@@ -20,7 +20,7 @@ silent mkdir $test_device_folder
 
 #-Tests-----------------------------------------#
 
-# Test: Invalid device path
+# Test: Invalid device-folder path
 
 silent $test_command invalid_directory_path
 report_if_status_is 1
@@ -49,7 +49,7 @@ report_if_output_matches "$output" "$test_device_folder/usb1"
 rm -r $test_device_folder/*
 
 
-# Test: Multiple "usb"-devices
+# Test: Select first of multiple "usb"-devices
 
 touch "$test_device_folder/usb device with spaces"
 touch $test_device_folder/not_us_b
@@ -58,6 +58,16 @@ touch $test_device_folder/usb1
 # TODO: Implement using the `expect` command
 
 rm -r $test_device_folder/*
+
+
+# Test: Select "I don't know" option
+
+# TODO: Implement using TCL's expect
+
+
+# Test: Select "Quit" option
+
+# TODO: Implement using TCL's expect
 
 
 #-Test-Cleanup------------------------------------#

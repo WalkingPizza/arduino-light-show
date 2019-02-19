@@ -17,8 +17,9 @@
 #
 # Exit status:
 # * 0: An Arduino-device was found an printed to stdout.
-# * 1: No fitting Arduino-device was found.
-# * 2: The user chose to quit the program.
+# * 1: The given device-folder does not exits, or can't be read
+# * 2: No fitting Arduino-device was found.
+# * 3: The user chose to quit the program.
 
 
 #-Constants-------------------------------------#
@@ -68,8 +69,8 @@ function merge_tty_onto_cu {
 #-Main-Program----------------------------------#
 
 
-# Asserts that the given path is a directory.
-if [ ! -d "$device_folder" ]; then
+# Asserts that the given path is a readable directory.
+if ! [ -d "$device_folder" -a -r "$device_folder" ]; then
    echo "Error: \`$device_folder\` is not a valid directory path" >&2
    exit 1
 fi
@@ -103,8 +104,8 @@ echo "Choose the Arduino's port or another option:" >&2
 select selection in $select_options; do
    # Either exits the program on reason-specific exit codes, or sets the selected device-path.
    case "$selection" in
-      $dont_know_option) exit 1 ;;
-           $quit_option) exit 2 ;;
+      $dont_know_option) exit 2 ;;
+           $quit_option) exit 3 ;;
                       *) device_path="$device_folder/$selection"; break ;;
    esac
 done

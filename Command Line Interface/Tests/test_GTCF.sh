@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Import testing utilities.
-. ./utilities.sh
+. utilities.sh
 
 
 #-Constant-Declarations-------------------------#
@@ -148,4 +148,4 @@ report_if_output_matches "$output" $'#threshold #1: 1\nvalid threshold: 01234567
 
 silent rm $test_ino_file
 silent rm $test_configuration_file
-rm -r $test_directory
+silent rm -r $test_directory
