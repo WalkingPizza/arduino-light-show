@@ -1,0 +1,12 @@
+threshold_configuration.sh: 104:    Print an error message for each duplicate identifier.
+test_APU.sh: 58: Implement using the `expect` command
+test_APU.sh: 65: Implement using TCL's expect
+test_APU.sh: 70: Implement using TCL's expect
+test_APD.sh: 32: Implement using TCL's expect
+test_APD.sh: 37: Implement using TCL's expect
+test_APD.sh: 42: Implement using TCL's expect
+test_APD.sh: 47: Implement using TCL's expect
+installer.sh: 95: Uncomment this when deploying.
+configure_thresholds.sh: 19: determine path of files
+configure_thresholds.sh: 40: # TODO:
+apply_configuration.sh: 84: # TODO:
