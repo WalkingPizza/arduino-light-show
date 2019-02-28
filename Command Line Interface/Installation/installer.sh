@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This script installs all of the components needed for the Arduino Light Show CLI to run.
-# Everything is kept in the "~/Library/ApplicationScripts/ArduinoLightShowCLI" directory.
+# Everything is kept in the "~/Library/Application Scripts/Arduino Light Show CLI" directory.
 #
 # Install command:
 # `curl -sSfL <link-to-this-file> | bash`
@@ -13,12 +13,16 @@
 declare -r cli_folder="$HOME/Library/Application Scripts/Arduino Light Show CLI"
 declare -r script_path="$PWD/installer.sh"
 
+declare -r directory_url='https://raw.githubusercontent.com/WalkingPizza/arduino-light-show/master/Command%20Line%20Interface'
 file_urls=`cat << 'END'
-   https://raw.githubusercontent.com/WalkingPizza/arduino-light-show/master/Command%20Line%20Interface/arduino_path_diff.sh
-
-   ... add more URLs here ...
+   apply_configuration.sh
+   arduino_path_diff.sh
+   arduino_path_usb.sh
+   configure_thresholds.sh
+   threshold_configuration.sh
 END
 `
+
 
 #-Functions-------------------------------------#
 
@@ -80,13 +84,13 @@ cd "$cli_folder"
 
 # Pulls all of the files needed for the CLI to work.
 while read file_url; do
-   curl -O -sSfL "$file_url"
+   curl -O -sSfL "$directory_url/$file_url"
 done <<< "$file_urls"
 
 # Add execute permissions to all script files.
 chmod u+x *.sh
 
-echo Installation complete
+echo 'Installation complete'
 
 # TODO: Uncomment this when deploying.
 # rm "$script_path"
