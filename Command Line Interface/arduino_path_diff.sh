@@ -72,7 +72,9 @@ function merge_tty_onto_cu {
    echo "$possible_devices"
 }
 
+
 #-Main-Program----------------------------------#
+
 
 # Asserts that the given path is a readable directory.
 if ! [ -d "$device_folder" -a -r "$device_folder" ]; then

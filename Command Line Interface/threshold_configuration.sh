@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# This script takes a `.ino`-file as command line argument and generates a threshold-configration
-# file, corresponding to the `.ino`-file's threshold-declarations.
+# This script takes a `.ino`-file as command line argument and prints a threshold-configuration
+# corresponding to the `.ino`-file's threshold-declarations.
 #
 # A "threshold-declaration" has the form:
 #
@@ -21,10 +21,9 @@
 # * 1: No program-file was given as argument
 # * 2: The given program-file path is invalid or not readable
 # * 3: The given program-file path is not a `.ino`-file
-# * 4: The threshold-configuration file could not be created at the given path
-# * 5: Duplicate microphone-identifiers were detected in the `.ino`-file
-# * 6: Malformed threshold-declaration bodies were detected in the `.ino`-file
-# * 7: Program-internal error
+# * 4: Duplicate microphone-identifiers were detected in the `.ino`-file
+# * 5: Malformed threshold-declaration bodies were detected in the `.ino`-file
+# * 6: Program-internal error
 
 # Exiting convention:
 # Functions whose names contain a trailing underscore, require exiting the script on non-zero exit
@@ -37,12 +36,6 @@
 
 declare -r script_name=${BASH_SOURCE##*/}
 declare -r ino_file=$1
-
-if [ -n "$2" ]; then
-   declare -r configuration_file=$2;
-else
-   declare -r configuration_file='threshold_configuration'
-fi
 
 declare -r line_number_pattern='^\s*[0-9]+\s+'
 declare -r header_candidate_pattern="$line_number_pattern//\\s*#threshold\\s+"
@@ -64,7 +57,7 @@ function abort_on_bad_path_ {
       exit 1
    fi
 
-   # Aborts if the given string is not a path to an exiting readable file.
+   # Aborts if the given string is not a path to an existing readable file.
    if ! [ -f "$1" -a -r "$1" ]; then
       echo "Error: \`$script_name\` expects an existing readable file as argument" >&2
       exit 2
@@ -78,27 +71,6 @@ function abort_on_bad_path_ {
 
    return 0 # Exiting convention
 }
-
-# Creates or empties the threshold-configuration file if one already exists.
-function initialize_configuration_file_ {
-   # Creates intermediate directories if they don't already exist.
-   mkdir -p "`dirname "$configuration_file"`" &> /dev/null
-
-   # Creates the file if it doesn't already exist.
-   touch "`basename "$configuration_file"`" &> /dev/null
-
-   # Aborts if the file could not be created, or isn't read- and writable.
-   if ! [ -f "$configuration_file" -a -r "$configuration_file" -a -w "$configuration_file" ]; then
-      echo "Error: \`$configuration_file\` could not be created" >&2
-      exit 4
-   fi
-
-   # Empties the file.
-   > "$configuration_file"
-
-   return 0 # Exiting convention
-}
-
 
 # This function takes a regex-pattern and a line numbered `.ino`-program. It prints the successors
 # of all of the lines in the program, matching the regex-pattern.
@@ -131,7 +103,7 @@ function abort_on_duplicate_identifiers_ {
 
    # TODO: Print an error message for each duplicate identifier.
 
-   exit 5
+   exit 4
 }
 
 # This functions takes a list of body candidates. For every malformed body it prints an error to
@@ -147,7 +119,7 @@ function abort_on_malformed_bodies_ {
          echo "Error: \`$ino_file\` line $line_number: Malformed threshold-declaration body" >&2
       done <<< "$malformed_declaration_bodies"
 
-      exit 6
+      exit 5
    fi
 
    return 0 # Exiting convention
@@ -211,14 +183,12 @@ threshold_values=`get_threshold_values_ "$numbered_ino_program"` || exit $?
 if [ `wc -l <<< "$microphone_identifiers"` -ne `wc -l <<< "$threshold_values"` ]; then
    echo "Error: \`$script_name\` found different numbers of microphone-identifiers" \
         "and threshold-values" >&2
-   exit 7
+   exit 6
 fi
-
-initialize_configuration_file_
 
 # Merges the threshold configuration items into joined lines.
 threshold_configuration=`paste -d ':' <(echo "$microphone_identifiers") <(echo "$threshold_values")`
 
-# Writes the (formatted) current threshold-configuration to the configuration file.
-sed -e 's/:/: /' <<< "$threshold_configuration" > "$configuration_file"
+# Writes the (formatted) current threshold-configuration to stdout.
+sed -e 's/:/: /' <<< "$threshold_configuration"
 exit 0

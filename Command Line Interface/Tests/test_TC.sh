@@ -7,10 +7,8 @@
 #-Constant-Declarations-------------------------#
 
 
-declare -r test_command='../generate_threshold_configuration_file.sh'
-declare -r test_ino_file='test_GTCF_ino_file.ino'
-declare -r test_configuration_file='test_GTCF_threshold_configuration'
-declare -r test_directory='test_GTCF_directory'
+declare -r test_command='../threshold_configuration.sh'
+declare -r test_ino_file='test_TC_ino_file.ino'
 
 
 #-Test-Setup------------------------------------#
@@ -52,21 +50,8 @@ rm "$non_ino_file"
 
 > $test_ino_file
 
-silent $test_command $test_ino_file $test_configuration_file
+silent $test_command $test_ino_file
 report_if_status_is 0
-
-
-# Test: Configuration file creation
-
-# Creates the test directory without read and write permissions.
-mkdir $test_directory
-chmod -rw $test_directory
-
-silent $test_command $test_ino_file "$test_directory/$test_configuration_file"
-report_if_status_is 4
-
-# Restores the test directory's read and write permissions.
-chmod +rw $test_directory
 
 
 # Test: Duplicate microphone identifiers
@@ -77,8 +62,8 @@ cat << END > $test_ino_file
 // #threshold "A"
 END
 
-silent $test_command $test_ino_file $test_configuration_file
-report_if_status_is 5
+silent $test_command $test_ino_file
+report_if_status_is 4
 
 
 # Test: Malformed declaration body
@@ -91,8 +76,8 @@ const int a = 1;
 int b = 2;
 END
 
-silent $test_command $test_ino_file $test_configuration_file
-report_if_status_is 6
+silent $test_command $test_ino_file
+report_if_status_is 5
 
 
 # Test: Perfect `.ino`-file
@@ -105,9 +90,7 @@ const int a = 1;
 const int b = 2;
 END
 
-silent $test_command $test_ino_file $test_configuration_file
-
-output=`cat $test_configuration_file`
+output=`silent stderr $test_command $test_ino_file`
 report_if_output_matches "$output" $'A: 1\nB: 2'
 
 
@@ -137,9 +120,7 @@ int thisDoesntMatter = -1;
 char againDoesntMatter = -2;
 END
 
-silent $test_command $test_ino_file $test_configuration_file
-
-output=`cat $test_configuration_file`
+output=`silent stderr $test_command $test_ino_file`
 report_if_output_matches "$output" $'#threshold #1: 1\nvalid threshold: 0123456789'
 
 
@@ -147,5 +128,3 @@ report_if_output_matches "$output" $'#threshold #1: 1\nvalid threshold: 01234567
 
 
 silent rm $test_ino_file
-silent rm $test_configuration_file
-silent rm -r $test_directory

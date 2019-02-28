@@ -20,3 +20,6 @@
 
 
 #-Main-Program----------------------------------#
+
+# Get configuration-file and program-file (and optionally a configuration file matching the program-file)
+# Create a mapping between old declarations and new declarations.

@@ -12,8 +12,14 @@ alias report_if_status_is='report_exit_status_assertion $LINENO '
 alias report_if_output_matches='report_ouput_assertion $LINENO '
 
 # Runs a given command while removing all of its output to stdout and stderr. `$?` remains the same.
+# If "stderr" is passed as first command line argument, only it is silenced.
 function silent {
-   $@ &> /dev/null
+   if [ "$1" = "stderr" ]; then
+      ${@:2} 2> /dev/null
+   else
+      $@ &> /dev/null
+   fi
+
    return $?
 }
 
