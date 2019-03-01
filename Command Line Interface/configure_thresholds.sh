@@ -16,11 +16,11 @@
 #-Constants-------------------------------------#
 
 
-# TODO: determine path of files
+declare -r program_file=`ls -1 | egrep '\.ino$'`
 
-declare -r program_file=''
-declare -r current_configuration_file='' # This is only a temporary file
-declare -r new_configuration_file='' # This is only a temporary file
+# These files are only temporary
+declare -r current_configuration_file='current_configuration'
+declare -r new_configuration_file='new_configuration'
 
 
 #-Functions-------------------------------------#
