@@ -4,7 +4,7 @@
 # Everything is kept in the "~/Library/Application Scripts/Arduino Light Show CLI" directory.
 #
 # Install command:
-# `curl -sSfL <link-to-this-file> | bash`
+# `curl -sSfLO 'https://raw.githubusercontent.com/WalkingPizza/arduino-light-show/master/Command%20Line%20Interface/Installation/install_files'; curl -sSfL 'https://raw.githubusercontent.com/WalkingPizza/arduino-light-show/master/Command%20Line%20Interface/Installation/installer.sh' | bash`
 
 
 #-Constants-------------------------------------#
@@ -12,16 +12,8 @@
 
 declare -r cli_folder="$HOME/Library/Application Scripts/Arduino Light Show CLI"
 declare -r script_path="$PWD/installer.sh"
-
-declare -r directory_url='https://raw.githubusercontent.com/WalkingPizza/arduino-light-show/master/Command%20Line%20Interface'
-file_urls=`cat << 'END'
-   apply_configuration.sh
-   arduino_path_diff.sh
-   arduino_path_usb.sh
-   configure_thresholds.sh
-   threshold_configuration.sh
-END
-`
+declare -r install_files_list="$PWD/install_files"
+declare -r install_files_directory=`head -n 1 "$install_files_list"`
 
 
 #-Functions-------------------------------------#
@@ -29,9 +21,9 @@ END
 
 function install_arduino_cli_ {
    # Defines needed constants.
-   local install_folder=arduino_cli_install
-   local archive_name=arduino_cli.zip
-   local ardunio_cli_url=https://downloads.arduino.cc/arduino-cli/arduino-cli-latest-osx.zip
+   local install_folder='arduino_cli_install'
+   local archive_name='arduino_cli.zip'
+   local ardunio_cli_url='https://downloads.arduino.cc/arduino-cli/arduino-cli-latest-osx.zip'
 
    mkdir $install_folder &> /dev/null
    cd $install_folder &> /dev/null
@@ -84,13 +76,16 @@ cd "$cli_folder"
 
 # Pulls all of the files needed for the CLI to work.
 while read file_url; do
-   curl -O -sSfL "$directory_url/$file_url"
-done <<< "$file_urls"
+   curl -O -sSfL "$install_files_directory/$file_url"
+done <<< "`tail -n +3 "$install_files_list"`"
 
 # Add execute permissions to all script files.
 chmod u+x *.sh
 
 echo 'Installation complete'
 
-# TODO: Uncomment this when deploying.
+# TODO: Uncomment this when deploying
 # rm "$script_path"
+
+# TODO: Uncomment this when deploying
+# rm "$install_files_list"

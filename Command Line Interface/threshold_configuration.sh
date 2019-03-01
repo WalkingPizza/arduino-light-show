@@ -101,8 +101,8 @@ function abort_on_duplicate_identifiers_ {
       return 0  # Exiting convention
    fi
 
-   # TODO: Print an error message for each duplicate identifier.
-
+   # TODO: Print an error message for each duplicate identifier
+   
    exit 4
 }
 

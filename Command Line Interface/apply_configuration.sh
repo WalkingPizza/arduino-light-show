@@ -81,5 +81,4 @@ function abort_on_malformed_files_ {
 abort_on_bad_paths_ "$new_configuration_file" "$ino_file" "$old_configuration_file" || exit $?
 abort_on_malformed_files_ "$old_configuration_file" "$new_configuration_file" || exit $?
 
-# TODO:
-# Create mapping between old and new declarations
+# TODO: Create mapping between old and new declarations

@@ -1,0 +1,7 @@
+https://raw.githubusercontent.com/WalkingPizza/arduino-light-show/master/Command%20Line%20Interface
+
+apply_configuration.sh
+arduino_path_diff.sh
+arduino_path_usb.sh
+configure_thresholds.sh
+threshold_configuration.sh

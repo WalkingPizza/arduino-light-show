@@ -55,7 +55,7 @@ touch "$test_device_folder/usb device with spaces"
 touch $test_device_folder/not_us_b
 touch $test_device_folder/usb1
 
-# TODO: Implement using the `expect` command
+# TODO: Implement using TCL's expect
 
 rm -r $test_device_folder/*
 

@@ -37,6 +37,5 @@ vi "$new_configuration_file"
 
 ./apply_configuration.sh "$new_configuration_file" "$program_file" "$current_configuration_file" || exit $?
 
-# TODO:
-# Get the Arduino's path.
-# Compile and upload the program file to the Arduino.
+# TODO: Get the Arduino's path
+# TODO: Compile and upload the program file to the Arduino
