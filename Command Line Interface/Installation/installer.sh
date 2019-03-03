@@ -6,6 +6,9 @@
 # Install command:
 # `curl -sSfLO 'https://raw.githubusercontent.com/WalkingPizza/arduino-light-show/master/Command%20Line%20Interface/Installation/install_files'; curl -sSfL 'https://raw.githubusercontent.com/WalkingPizza/arduino-light-show/master/Command%20Line%20Interface/Installation/installer.sh' | bash`
 
+# TODO: Add proper documentation to this file
+# TODO: Add some main `lightshow-cli` script to a $PATH-folder
+
 
 #-Constants-------------------------------------#
 
@@ -82,10 +85,6 @@ done <<< "`tail -n +3 "$install_files_list"`"
 # Add execute permissions to all script files.
 chmod u+x *.sh
 
+# Cleans up the installation.
+rm "$install_files_list"
 echo 'Installation complete'
-
-# TODO: Uncomment this when deploying
-# rm "$script_path"
-
-# TODO: Uncomment this when deploying
-# rm "$install_files_list"

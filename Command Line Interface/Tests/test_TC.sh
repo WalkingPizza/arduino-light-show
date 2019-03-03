@@ -7,15 +7,15 @@
 #-Constant-Declarations-------------------------#
 
 
-declare -r test_command='../threshold_configuration.sh'
-declare -r test_ino_file='test_TC_ino_file.ino'
+readonly test_command='../threshold_configuration.sh'
+readonly test_ino_file='test_TC_ino_file.ino'
 
 
 #-Test-Setup------------------------------------#
 
 
 echo "* Testing \``basename $test_command`\` in \`${BASH_SOURCE##*/}\`:"
-touch $test_ino_file
+silent touch $test_ino_file
 
 
 #-Tests-----------------------------------------#
@@ -43,7 +43,7 @@ silent $test_command "$non_ino_file"
 report_if_status_is 3
 
 # Removes the temporary file.
-rm "$non_ino_file"
+silent rm "$non_ino_file"
 
 
 # Test: Existing (empty) `.ino`-file
@@ -86,12 +86,12 @@ cat << END > $test_ino_file
 // #threshold "A"
 const int a = 1;
 
-// #threshold "B"
-const int b = 2;
+// #threshold "B C"
+const int bc = 2;
 END
 
 output=`silent stderr $test_command $test_ino_file`
-report_if_output_matches "$output" $'A: 1\nB: 2'
+report_if_output_matches "$output" $'A: 1\nB C: 2'
 
 
 # Test: Messy `.ino`-file
@@ -100,31 +100,35 @@ cat << END > $test_ino_file
 // #threshold "#threshold #1"
 const int a = 1;
 
-// #threshold "ignored threshold bacause of the :"
-const int b = 0;
-
-// #threshold "ignored threshold bacause of the " "
-const int c = 0;
-
 // #threshold "valid threshold"
 const int _3complicated5Me = 0123456789;
+
+// #threshold "ignored threshold because of the " "
+const int c = 0;
+
+// #threshold "ignored threshold bacause of the :"
+const int b = 0;
 
 for (int i = 0; i < 10; i++) {
    printf("Index: %d", i);
 }
 
+// #threshold "b"
+const int _2complicated4Me = 123;
+
 // #threshol "ignored threshold declaration"
 int thisDoesntMatter = -1;
 
 // #threshold "ignored again
-char againDoesntMatter = -2;
+char againDoesntMatter = 'a';
 END
 
 output=`silent stderr $test_command $test_ino_file`
-report_if_output_matches "$output" $'#threshold #1: 1\nvalid threshold: 0123456789'
+report_if_output_matches "$output" $'#threshold #1: 1\nvalid threshold: 0123456789\nb: 123'
 
 
 #-Test-Cleanup------------------------------------#
 
 
 silent rm $test_ino_file
+exit 0

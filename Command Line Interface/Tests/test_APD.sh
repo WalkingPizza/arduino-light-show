@@ -7,8 +7,8 @@
 #-Constant-Declarations-------------------------#
 
 
-declare -r test_command='../arduino_path_diff.sh'
-declare -r test_device_folder='test_APD_devices'
+readonly test_command='../arduino_path_diff.sh'
+readonly test_device_folder='test_APD_devices'
 
 
 #-Test-Setup------------------------------------#
@@ -50,4 +50,5 @@ report_if_status_is 1
 #-Test-Cleanup------------------------------------#
 
 
-rm -r $test_device_folder
+silent rm -r $test_device_folder
+exit 0

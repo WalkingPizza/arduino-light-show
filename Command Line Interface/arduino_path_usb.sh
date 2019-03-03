@@ -25,14 +25,19 @@
 #-Constants-------------------------------------#
 
 
-if [ -n "$1" ]; then
-   declare -r device_folder=${1%/};
-else
-   declare -r device_folder='/dev'
-fi
+# The function wrapping all constant-declarations for this script.
+function declare_constants {
+   # Sets the device-folder as the first command line argument, or `/dev` if none was passed.
+   if [ -n "$1" ]; then
+      readonly device_folder=${1%/};
+   else
+      readonly device_folder='/dev'
+   fi
 
-declare -r dont_know_option="I don't know"
-declare -r quit_option='Quit'
+   # Defines strings appearing as options in the select statement below.
+   readonly dont_know_option="I don't know"
+   readonly quit_option='Quit'
+}
 
 
 #-Functions-------------------------------------#
@@ -68,6 +73,8 @@ function merge_tty_onto_cu {
 
 #-Main-Program----------------------------------#
 
+
+declare_constants "$@"
 
 # Asserts that the given path is a readable directory.
 if ! [ -d "$device_folder" -a -r "$device_folder" ]; then

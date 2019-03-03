@@ -12,7 +12,7 @@
 # * 2: No fitting Arduino-device was found.
 # * 3: Multiple fitting Arduino-devices were found.
 # * 4: The user chose to quit the program.
-
+#
 # Exiting convention:
 # Functions whose names contain a trailing underscore, require exiting the script on non-zero exit
 # status. This only requires action when this function is run in a subshell. So e.g. if
@@ -22,20 +22,29 @@
 #-Constants-------------------------------------#
 
 
-if [ -n "$1" ]; then
-   declare -r device_folder=${1%/};
-else
-   declare -r device_folder='/dev'
-fi
+# The function wrapping all constant-declarations for this script.
+function declare_constants {
+   # Sets the device-folder as the first command line argument, or `/dev` if none was passed.
+   if [ -n "$1" ]; then
+      readonly device_folder=${1%/};
+   else
+      readonly device_folder='/dev'
+   fi
+}
 
 
 #-Functions-------------------------------------#
 
 
+# Prompts the user for input until either [ENTER] or [ESC] is pressed. If [ENTER] is pressed, the
+# function returns successfully, otherwise it aborts.
 function get_approval_or_exit_ {
+   # Creates an infinite loop.
    while :; do
+      # Reads exactly one character.
       read -s -n 1
 
+      # Checks for [ENTER] or [ESC].
       case $REPLY in
          '') break ;;
          $'\e') exit 4 ;;
@@ -75,6 +84,8 @@ function merge_tty_onto_cu {
 
 #-Main-Program----------------------------------#
 
+
+declare_constants "$@"
 
 # Asserts that the given path is a readable directory.
 if ! [ -d "$device_folder" -a -r "$device_folder" ]; then

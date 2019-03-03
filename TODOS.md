@@ -3,15 +3,18 @@
    
 ---
 ### `apply_configuration.sh`:
-* line 84: Create mapping between old and new declarations
+* line 119: Generate threshold-declarations from the new configuration
+* line 128: Insert the generated declarations at the insertion point
+* line 15: Add documentation to this file
 ---
 ### `configure_thresholds.sh`:
-* line 40: Get the Arduino's path
-* line 41: Compile and upload the program file to the Arduino
+* line 15: Add documentation to this file
+* line 48: Get the Arduino's path
+* line 49: Compile and upload the program file to the Arduino
 ---
 ### `installer.sh`:
-* line 87: Uncomment this when deploying
-* line 90: Uncomment this when deploying
+* line 10: Add some main `lightshow-cli` script to a $PATH-folder
+* line 9: Add proper documentation to this file
 ---
 ### `test_APD.sh`:
 * line 32: Implement using TCL's expect
@@ -23,6 +26,3 @@
 * line 58: Implement using TCL's expect
 * line 65: Implement using TCL's expect
 * line 70: Implement using TCL's expect
----
-### `threshold_configuration.sh`:
-* line 104:    Print an error message for each duplicate identifier
