@@ -3,8 +3,7 @@
    
 ---
 ### `apply_configuration.sh`:
-* line 119: Generate threshold-declarations from the new configuration
-* line 128: Insert the generated declarations at the insertion point
+* line 140: Remove any uses of "threshold_declaration_[n >= number of declarations]_value"
 * line 15: Add documentation to this file
 ---
 ### `configure_thresholds.sh`:
@@ -15,6 +14,9 @@
 ### `installer.sh`:
 * line 10: Add some main `lightshow-cli` script to a $PATH-folder
 * line 9: Add proper documentation to this file
+---
+### `test_AC.sh`:
+* line 201: Find out why "test_AC_ino_file.ino-e" appears when running this test
 ---
 ### `test_APD.sh`:
 * line 32: Implement using TCL's expect

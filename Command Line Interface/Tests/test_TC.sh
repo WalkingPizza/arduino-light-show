@@ -90,7 +90,7 @@ const int a = 1;
 const int bc = 2;
 END
 
-output=`silent stderr $test_command $test_ino_file`
+output=`silent --stderr $test_command $test_ino_file`
 report_if_output_matches "$output" $'A: 1\nB C: 2'
 
 
@@ -101,7 +101,7 @@ cat << END > $test_ino_file
 const int a = 1;
 
 // #threshold "valid threshold"
-const int _3complicated5Me = 0123456789;
+const int _3complicated5Me = 123456789;
 
 // #threshold "ignored threshold because of the " "
 const int c = 0;
@@ -123,8 +123,8 @@ int thisDoesntMatter = -1;
 char againDoesntMatter = 'a';
 END
 
-output=`silent stderr $test_command $test_ino_file`
-report_if_output_matches "$output" $'#threshold #1: 1\nvalid threshold: 0123456789\nb: 123'
+output=`silent --stderr $test_command $test_ino_file`
+report_if_output_matches "$output" $'#threshold #1: 1\nvalid threshold: 123456789\nb: 123'
 
 
 #-Test-Cleanup------------------------------------#
