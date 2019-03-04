@@ -24,9 +24,8 @@ function declare_constants {
    readonly script_name=${BASH_SOURCE##*/}
 
    # Named command line arguments.
-   readonly new_configuration_file=$1
+   readonly configuration_file=$1
    readonly ino_file=$2
-   readonly current_configuration_file=$3
 
    # The path to the file containing the regular expressions describing threshold-declarations.
    readonly regex_file="`dirname "$0"`/regular_expressions"
@@ -35,6 +34,7 @@ function declare_constants {
    readonly header_pattern=`lines_after '^T declaration header$' "$regex_file"`
    readonly body_pattern=`lines_after '^T declaration body$' "$regex_file"`
    readonly configuration_pattern=`lines_after '^T configuration entry$' "$regex_file"`
+   readonly end_tag_pattern=`lines_after '^T declarations end tag$' "$regex_file"`
 }
 
 
@@ -68,7 +68,7 @@ function abort_on_bad_paths_ {
 function abort_on_malformed_configuration_ {
    # Aborts if the configuration file contains invalid entries.
    if egrep -v "$configuration_pattern" "$1"; then
-      echo "Error: \`$1\` contains malformed content" >&2
+      echo "Error: \`$script_name\` received malformed configuration file" >&2
       exit 3
    fi
 
@@ -90,12 +90,26 @@ function abort_on_malformed_configuration_ {
    exit 4
 }
 
+function declaration_line_numbers {
+   line_counter=1
+
+   while read line; do
+      if egrep -q "$header_pattern" <<< "$line"; then
+         echo $line_counter
+         echo $(( line_counter + 1 ))
+      elif egrep -q "$end_tag_pattern" <<< "$line"; then
+         return
+      fi
+
+      (( line_counter++ ))
+   done < "$1"
+}
+
 function threshold_declarations_for_configuration {
    configuration=`cat $1`
    [ -z "$configuration" ] && return
 
    declaration_counter=0
-
    while read declaration; do
       microphone_id=`cut -d : -f 1 <<< "$declaration"`
       threshold_value=`cut -d : -f 2 <<< "$declaration"`
@@ -106,6 +120,8 @@ function threshold_declarations_for_configuration {
 
       (( declaration_counter++ ))
    done <<< "$configuration"
+
+   echo '// #threshold-declarations-end'
 }
 
 #-Main-Program----------------------------------#
@@ -113,26 +129,24 @@ function threshold_declarations_for_configuration {
 
 declare_constants "$@"
 
-# Aborts if any of the given command line arguments are invalid or malformed.
-abort_on_bad_paths_ "$new_configuration_file" "$ino_file" "$current_configuration_file" || exit $?
-abort_on_malformed_configuration_ "$current_configuration_file" || exit $?
-abort_on_malformed_configuration_ "$new_configuration_file" || exit $?
+# Aborts if either of the given command line arguments are invalid or malformed.
+abort_on_bad_paths_ "$configuration_file" "$ino_file" || exit $?
+abort_on_malformed_configuration_ "$configuration_file" || exit $?
 
-# Gets the line numbers of all threshold-declaration lines.
-declaration_header_lines=`egrep -n "$header_pattern" "$ino_file" | cut -d : -f 1`
+# Gets all of the lines containing threshold-declarations.
+declaration_line_numbers=`declaration_line_numbers "$ino_file"`
 
 # Removes all of the current threshold-declarations (in reverse order, so removal of one line does
 # not affect the line number of another).
 while read line_to_delete; do
-   sed -i -e "$(( line_to_delete + 1 ))d" "$ino_file"
    sed -i -e "${line_to_delete}d" "$ino_file"
-done <<< "`tail -r <<< "$declaration_header_lines"`"
+done <<< "`tail -r <<< "$declaration_line_numbers"`"
 
 # Determines where to insert the new threshold-declarations.
-declaration_insertion_point=`head -n 1 <<< "$declaration_header_lines"`
+declaration_insertion_point=`head -n 1 <<< "$declaration_line_numbers"`
 
 # Generates threshold-declarations from the new configuration.
-new_declarations=`threshold_declarations_for_configuration "$new_configuration_file"`
+new_declarations=`threshold_declarations_for_configuration "$configuration_file"`
 
 # Inserts the generated declarations at the insertion point.
 ex -s -c "${declaration_insertion_point}i|$new_declarations" -c 'x' "$ino_file"

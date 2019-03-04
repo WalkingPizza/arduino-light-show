@@ -3,7 +3,7 @@
    
 ---
 ### `apply_configuration.sh`:
-* line 140: Remove any uses of "threshold_declaration_[n >= number of declarations]_value"
+* line 154: Remove any uses of "threshold_declaration_[n >= number of declarations]_value"
 * line 15: Add documentation to this file
 ---
 ### `configure_thresholds.sh`:
@@ -16,7 +16,7 @@
 * line 9: Add proper documentation to this file
 ---
 ### `test_AC.sh`:
-* line 201: Find out why "test_AC_ino_file.ino-e" appears when running this test
+* line 187: Find out why "test_AC_ino_file.ino-e" appears when running this test
 ---
 ### `test_APD.sh`:
 * line 32: Implement using TCL's expect

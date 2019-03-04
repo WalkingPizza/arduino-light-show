@@ -48,6 +48,7 @@ function declare_constants {
    readonly header_candidate_pattern=`lines_after '^T declaration header candidate$' "$regex_file"`
    readonly header_pattern=`lines_after '^T declaration header$' "$regex_file"`
    readonly body_pattern=`lines_after '^T declaration body$' "$regex_file"`
+   readonly end_tag_pattern=`lines_after '^T declarations end tag$' "$regex_file"`
 }
 
 
@@ -141,13 +142,71 @@ function abort_on_malformed_bodies_ {
    exit 5
 }
 
+# A helper function to `numbered_declaration_components` which gets the line numbered threshold
+# declaration bodies for a given file.
+function _numbered_declaration_bodies {
+   # Sets up state variables.
+   local line_counter=1
+   local last_matched=false
+
+   # Iterates over the lines in the file.
+   while read line; do
+      # Prints the current line if the previous one matched (meaning that this line should be a
+      # declaration body).
+      if [ "$last_matched" = 'true' ]; then
+         echo "$line_counter:$line"
+         last_matched=false
+      else
+         # Checks for threshold-declaration headers, or the end tag.
+         if egrep -q "$header_pattern" <<< "$line"; then
+            last_matched=true
+         elif egrep -q "$end_tag_pattern" <<< "$line"; then
+            return
+         fi
+      fi
+
+      (( line_counter++ ))
+   done < "$1"
+}
+
+# This function takes a flag and a program file. It returns all of the lines (with line numbers) in
+# the given program file, that match the chosen threshold-declaration component. The search stops
+# when matching a thresholds-end tag.
+# Possible flags are: "--header-candidates", "--headers" or "--bodies"
+function numbered_declaration_components {
+   # Sets the appropriate regex-pattern
+   if [ "$1" = '--header-candidates' ]; then
+      local pattern=$header_candidate_pattern
+   elif [ "$1" = '--headers' ]; then
+      local pattern=$header_pattern
+   elif [ "$1" = '--bodies' ]; then
+      echo "`_numbered_declaration_bodies "$2"`"
+      return
+   else
+      return
+   fi
+
+   # Iterates over the lines in the file.
+   line_counter=1
+   while read line; do
+      # Checks for matching lines, or the end tag.
+      if egrep -q "$pattern" <<< "$line"; then
+         echo "$line_counter:$line"
+      elif egrep -q "$end_tag_pattern" <<< "$line"; then
+         return
+      fi
+
+      (( line_counter++ ))
+   done < "$2"
+}
+
 # This function takes a `.ino`-file. It prints a list of the microphone-identifiers contained in the
 # given file.
 function get_microphone_identifiers_ {
    # Gets the lines containing possibly malformed threshold-declaration headers.
-   local header_candidates=`egrep -n "$header_candidate_pattern" "$1"`
+   local header_candidates=`numbered_declaration_components --headers-candidates "$1"`
    # Gets the lines containing valid threshold-declaration headers.
-   local headers=`egrep -n "$header_pattern" "$1"`
+   local headers=`numbered_declaration_components --headers "$1"`
 
    warn_about_malformed_headers "$header_candidates" "$headers"
 
@@ -171,7 +230,7 @@ function get_microphone_identifiers_ {
 function get_threshold_values_ {
    # Gets the lines right after the declaration headers, containing (possibly malformed) threshold-
    # declaration bodies.
-   local declaration_bodies=`egrep -nA1 "$header_pattern" "$1" | egrep '^[0-9]+-' | sed -e 's/-/:/'`
+   local declaration_bodies=`numbered_declaration_components --bodies "$1"`
 
    abort_on_malformed_bodies_ "$declaration_bodies" || exit $?
 
