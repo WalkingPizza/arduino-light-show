@@ -106,7 +106,7 @@ function declaration_line_numbers {
 }
 
 function threshold_declarations_for_configuration {
-   configuration=`cat $1`
+   configuration=`cat "$1"`
    [ -z "$configuration" ] && return
 
    declaration_counter=0

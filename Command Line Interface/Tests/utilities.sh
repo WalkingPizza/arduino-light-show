@@ -19,10 +19,10 @@ readonly turn_normal='\033[0m'
 # Runs a given command while removing all of its output to stdout and stderr. `$?` remains the same.
 # If "--stderr" is passed as first command line argument, only it is silenced.
 function silent {
-   if [ "$1" = "--stderr" ]; then
-      ${@:2} 2> /dev/null
+   if [ "$1" = '--stderr' ]; then
+      "${@:2}" 2> /dev/null
    else
-      $@ &> /dev/null
+      "$@" &> /dev/null
    fi
 
    return $?
