@@ -3,8 +3,6 @@
 # This script installs all of the components needed for the Arduino Light Show CLI to run.
 # Everything is kept in the "~/Library/Application Scripts/Arduino Light Show CLI" directory.
 
-# This script expects the URL of the repository as command line argument.
-
 # TODO: Add proper documentation to this file
 
 # TODO: Add an uninstaller that also remembers whether the Arduino-CLI was preinstalled
@@ -13,9 +11,9 @@
 #-Constants-------------------------------------#
 
 
-readonly repository_location=$1
+readonly repository_location='https://github.com/WalkingPizza/arduino-light-show/tree/master'
 readonly repository_folder='arduino-light-show'
-readonly cli_utilities='utilites.sh'
+readonly cli_utilities='Utilities/utilites.sh'
 readonly working_directory=`mktemp -d`
 
 
@@ -90,6 +88,7 @@ function install_arduino_cli_ {
 }
 
 function set_uninstaller_flags {
+   return
    # TODO: Implement
 }
 

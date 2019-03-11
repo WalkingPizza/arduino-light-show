@@ -15,9 +15,9 @@
 * line 1: Add documentation
 ---
 ### `installer.sh`:
-* line 10: Add an uninstaller that also remembers whether the Arduino-CLI was preinstalled
-* line 8: Add proper documentation to this file
-* line 93:    Implement
+* line 6: Add proper documentation to this file
+* line 8: Add an uninstaller that also remembers whether the Arduino-CLI was preinstalled
+* line 92:    Implement
 ---
 ### `regular_expressions`:
 * line 1: Add documentation

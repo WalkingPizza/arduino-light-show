@@ -33,7 +33,7 @@
 # Gets the directory of this script.
 dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 # Imports CLI utilities.
-. "$dot/../utilities.sh"
+. "$dot/../Utilities/utilities.sh"
 
 
 #-Constants-------------------------------------#

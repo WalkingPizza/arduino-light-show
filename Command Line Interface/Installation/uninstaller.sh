@@ -6,7 +6,7 @@
 # Gets the directory of this script.
 dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 # Imports CLI utilities.
-. "$dot/../utilities.sh"
+. "$dot/../Utilities/utilities.sh"
 
 echo 'Are you sure you want to uninstall the Arduino Light Show CLI? [ENTER or ESC]'
 get_approval_or_exit_ || exit 1
