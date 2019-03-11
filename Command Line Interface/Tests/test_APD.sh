@@ -1,21 +1,23 @@
 #!/bin/bash
 
-# Import testing utilities.
-. utilities.sh
+# Gets the directory of this script.
+dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
+# Imports testing utilities.
+. "$dot/utilities.sh"
 
 
 #-Constant-Declarations-------------------------#
 
 
-readonly test_command='../arduino_path_diff.sh'
-readonly test_device_folder='test_APD_devices'
+readonly test_command="$dot/../Scripts/arduino_path_diff.sh"
+readonly test_device_folder="$dot/test_APD_devices"
 
 
 #-Test-Setup------------------------------------#
 
 
-echo "* Testing \``basename $test_command`\` in \`${BASH_SOURCE##*/}\`:"
-silent mkdir $test_device_folder
+echo "Testing \``basename "$test_command"`\` in \`${BASH_SOURCE##*/}\`:"
+silent mkdir "$test_device_folder"
 
 
 #-Tests-----------------------------------------#
@@ -23,7 +25,7 @@ silent mkdir $test_device_folder
 
 # Test: Invalid device-folder path
 
-silent $test_command invalid_directory_path
+silent "$test_command" invalid_directory_path
 report_if_status_is 1
 
 
@@ -50,5 +52,5 @@ report_if_status_is 1
 #-Test-Cleanup------------------------------------#
 
 
-silent rm -r $test_device_folder
+silent rm -r "$test_device_folder"
 exit 0

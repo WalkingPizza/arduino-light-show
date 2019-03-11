@@ -3,7 +3,7 @@
    
 ---
 ### `apply_configuration.sh`:
-* line 154: Remove any uses of "threshold_declaration_[n >= number of declarations]_value"
+* line 128: Remove any uses of "threshold_declaration_[n >= number of declarations]_value"
 * line 15: Add documentation to this file
 ---
 ### `configure_thresholds.sh`:
@@ -11,20 +11,31 @@
 * line 48: Get the Arduino's path
 * line 49: Compile and upload the program file to the Arduino
 ---
+### `file_locations`:
+* line 1: Add documentation
+---
 ### `installer.sh`:
-* line 10: Add some main `lightshow-cli` script to a $PATH-folder
-* line 9: Add proper documentation to this file
+* line 6: Add proper documentation to this file
+* line 8: Add an uninstaller that also remembers whether the Arduino-CLI was preinstalled
+* line 92:    Implement
+---
+### `regular_expressions`:
+* line 1: Add documentation
 ---
 ### `test_AC.sh`:
-* line 187: Find out why "test_AC_ino_file.ino-e" appears when running this test
+* line 195: Find out why "test_AC_ino_file.ino-e" appears when running this test
 ---
 ### `test_APD.sh`:
-* line 32: Implement using TCL's expect
-* line 37: Implement using TCL's expect
-* line 42: Implement using TCL's expect
-* line 47: Implement using TCL's expect
+* line 34: Implement using TCL's expect
+* line 39: Implement using TCL's expect
+* line 44: Implement using TCL's expect
+* line 49: Implement using TCL's expect
 ---
 ### `test_APU.sh`:
-* line 58: Implement using TCL's expect
-* line 65: Implement using TCL's expect
-* line 70: Implement using TCL's expect
+* line 61: Implement using TCL's expect
+* line 68: Implement using TCL's expect
+* line 73: Implement using TCL's expect
+---
+### `utilities.sh`:
+* line 3: Add documentation
+* line 3: Add documentation

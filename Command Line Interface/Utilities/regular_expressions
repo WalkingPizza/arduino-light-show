@@ -1,14 +1,16 @@
-T declaration header candidate
+# TODO: Add documentation
+
+Threshold declaration header candidate:
 ^\s*//\s*#threshold\s+
 
-T declaration header
+Threshold declaration header:
 ^\s*//\s*#threshold\s+"[^:"]+"\s*$
 
-T declaration body
+Threshold declaration body:
 ^\s*const\s+int\s+[a-zA-Z_][a-zA-Z0-9_]*\s*=\s*(0|([1-9][0-9]*))*\s*;\s*$
 
-T declarations end tag
+Threshold declarations end tag:
 ^\s*//\s*#threshold-declarations-end\s*$
 
-T configuration entry
+Threshold configuration entry:
 ^[^:\"]+:\s+(0|([1-9][0-9]*))\s*$
