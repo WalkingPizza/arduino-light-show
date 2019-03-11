@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Gets the directory of this script.
-dot="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 # Imports testing utilities.
 . "$dot/utilities.sh"
 
@@ -9,7 +9,7 @@ dot="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 #-Constant-Declarations-------------------------#
 
 
-readonly test_command="$dot/../arduino_path_usb.sh"
+readonly test_command="$dot/../Scripts/arduino_path_usb.sh"
 readonly test_device_folder="$dot/test_APU_devices"
 
 

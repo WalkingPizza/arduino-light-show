@@ -1,0 +1,30 @@
+# TODO: Add documentation
+
+Repository CLI-directory:
+Command Line Interface
+
+CLI-command:
+lightshow-cli
+
+CLI-uninstaller:
+Installation/uninstaller.sh
+
+CLI-scripts:
+Scripts/apply_configuration.sh
+Scripts/arduino_path_diff.sh
+Scripts/arduino_path_usb.sh
+Scripts/configure_thresholds.sh
+Scripts/threshold_configuration.sh
+Installation/uninstaller.sh
+
+Destination for CLI-command:
+/usr/local/bin
+
+Destination for CLI-scripts:
+$HOME/Library/Application Scripts/Arduino Light Show CLI
+
+Arduino-CLI source:
+https://downloads.arduino.cc/arduino-cli/arduino-cli-latest-osx.zip
+
+Arduino-CLI destination:
+/usr/local/bin/arduino-cli

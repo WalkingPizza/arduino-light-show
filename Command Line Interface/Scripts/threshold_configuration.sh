@@ -30,6 +30,11 @@
 # status. This only requires action when this function is run in a subshell. So e.g. if
 # `my_function_` returns an error code of 1, the program should be exited.
 
+# Gets the directory of this script.
+dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
+# Imports CLI utilities.
+. "$dot/../utilities.sh"
+
 
 #-Constants-------------------------------------#
 
@@ -41,49 +46,11 @@ function declare_constants {
 
    # Named command line arguments.
    readonly ino_file=$1
-
-   # The path to the file containing the regular expressions describing threshold-declarations.
-   readonly regex_file="`dirname "$0"`/regular_expressions"
-
-   readonly header_candidate_pattern=`lines_after '^T declaration header candidate$' "$regex_file"`
-   readonly header_pattern=`lines_after '^T declaration header$' "$regex_file"`
-   readonly body_pattern=`lines_after '^T declaration body$' "$regex_file"`
-   readonly end_tag_pattern=`lines_after '^T declarations end tag$' "$regex_file"`
 }
 
 
 #-Functions-------------------------------------#
 
-
-# This function takes a regular expression and a file. It returns the lines immediately following
-# the lines matching the regular expression in the file.
-function lines_after {
-   egrep -A1 "$1" "$2" | egrep -v "$1|--"
-}
-
-# This function takes a file path. Aborts the program if the given string does not actually point to
-# an existing `.ino`-file.
-function abort_on_bad_path_ {
-   # Aborts if no command line argument has been passed.
-   if [ -z "$1" ]; then
-      echo "Error: \`$script_name\` expects an argument" >&2
-      exit 1
-   fi
-
-   # Aborts if the given string is not a path to an existing readable file.
-   if ! [ -f "$1" -a -r "$1" ]; then
-      echo "Error: \`$script_name\` expects an existing readable file as argument" >&2
-      exit 2
-   fi
-
-   # Aborts if the given string is not a path to an existing `.ino`-file.
-   if [ "${1: -4}" != '.ino' ]; then
-      echo "Error: \`$script_name\` expects an existing \`.ino\`-file as argument" >&2
-      exit 3
-   fi
-
-   return 0 # Exiting convention
-}
 
 # This functions takes line numbered lists of header candidates and valid headers. For every
 # malformed header it prints a warning to stderr.
@@ -128,6 +95,7 @@ function abort_on_duplicate_identifiers_ {
 # an error to stderr and aborts.
 function abort_on_malformed_bodies_ {
    # Gets the lines containing malformed threshold-declaration bodies.
+   local body_pattern=`regex_for --body`
    local malformed_bodies=`egrep -v "^\s*[0-9]+\s*:${body_pattern:1}" <<< "$1"`
 
    # Returns successfully if there are no malformed bodies.
@@ -158,9 +126,9 @@ function _numbered_declaration_bodies {
          last_matched=false
       else
          # Checks for threshold-declaration headers, or the end tag.
-         if egrep -q "$header_pattern" <<< "$line"; then
+         if egrep -q "`regex_for --header`" <<< "$line"; then
             last_matched=true
-         elif egrep -q "$end_tag_pattern" <<< "$line"; then
+         elif egrep -q "`regex_for --end-tag`" <<< "$line"; then
             return
          fi
       fi
@@ -176,9 +144,9 @@ function _numbered_declaration_bodies {
 function numbered_declaration_components {
    # Sets the appropriate regex-pattern
    if [ "$1" = '--header-candidates' ]; then
-      local pattern=$header_candidate_pattern
+      local pattern=`regex_for --header-candidate`
    elif [ "$1" = '--headers' ]; then
-      local pattern=$header_pattern
+      local pattern=`regex_for --header`
    elif [ "$1" = '--bodies' ]; then
       echo "`_numbered_declaration_bodies "$2"`"
       return
@@ -192,7 +160,7 @@ function numbered_declaration_components {
       # Checks for matching lines, or the end tag.
       if egrep -q "$pattern" <<< "$line"; then
          echo "$line_counter:$line"
-      elif egrep -q "$end_tag_pattern" <<< "$line"; then
+      elif egrep -q "`regex_for --end-tag`" <<< "$line"; then
          return
       fi
 
@@ -251,7 +219,7 @@ function get_threshold_values_ {
 declare_constants "$@"
 
 # Establishes that an existing `.ino`-file was passed, and creates constants for the program.
-abort_on_bad_path_ "$ino_file"
+abort_on_bad_path_ "$ino_file" --ino || exit $?
 
 # Gets the lists of microphone-identifiers.
 microphone_identifiers=`get_microphone_identifiers_ "$ino_file"` || exit $?

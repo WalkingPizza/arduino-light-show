@@ -14,6 +14,11 @@
 
 # TODO: Add documentation to this file
 
+# Gets the directory of this script.
+dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
+# Imports CLI utilities.
+. "$dot/../utilities.sh"
+
 
 #-Constants-------------------------------------#
 
@@ -26,50 +31,17 @@ function declare_constants {
    # Named command line arguments.
    readonly configuration_file=$1
    readonly ino_file=$2
-
-   # The path to the file containing the regular expressions describing threshold-declarations.
-   readonly regex_file="`dirname "$0"`/regular_expressions"
-
-   # Regular expression patterns.
-   readonly header_pattern=`lines_after '^T declaration header$' "$regex_file"`
-   readonly body_pattern=`lines_after '^T declaration body$' "$regex_file"`
-   readonly configuration_pattern=`lines_after '^T configuration entry$' "$regex_file"`
-   readonly end_tag_pattern=`lines_after '^T declarations end tag$' "$regex_file"`
 }
 
 
 #-Functions-------------------------------------#
 
 
-# This function takes a regular expression and a file. It returns the lines immediately following
-# the lines matching the regular expression in the file.
-function lines_after {
-   egrep -A1 "$1" "$2" | egrep -v "$1|--"
-}
-
-function abort_on_bad_paths_ {
-   # Aborts if the given strings are not paths to existing readable files.
-   for path in "${@}"; do
-      if ! [ -f "$path" -a -r "$path" ]; then
-         echo "Error: \`$script_name\` expects existing readable files as argument" >&2
-         exit 1
-      fi
-   done
-
-   # Aborts if the second string is not a path to an existing `.ino`-file.
-   if [ "${2: -4}" != '.ino' ]; then
-      echo "Error: \`$script_name\` expects an existing \`.ino\`-file as second argument" >&2
-      exit 2
-   fi
-
-   return 0 # Exiting convention
-}
-
 function abort_on_malformed_configuration_ {
    # Aborts if the configuration file contains invalid entries.
-   if egrep -v "$configuration_pattern" "$1"; then
+   if egrep -v "`regex_for --configuration-entry`" "$1"; then
       echo "Error: \`$script_name\` received malformed configuration file" >&2
-      exit 3
+      exit 4
    fi
 
    # Gets a list of duplicate identifiers.
@@ -87,17 +59,17 @@ function abort_on_malformed_configuration_ {
       echo "Error: \`$1\` lines $line_number_list: duplicate microphone-identifiers" >&2
    done <<< "$duplicate_microphone_ids"
 
-   exit 4
+   exit 5
 }
 
 function declaration_line_numbers {
    line_counter=1
 
    while read line; do
-      if egrep -q "$header_pattern" <<< "$line"; then
+      if egrep -q "`regex_for --header`" <<< "$line"; then
          echo $line_counter
          echo $(( line_counter + 1 ))
-      elif egrep -q "$end_tag_pattern" <<< "$line"; then
+      elif egrep -q "`regex_for --end-tag`" <<< "$line"; then
          return
       fi
 
@@ -124,13 +96,15 @@ function threshold_declarations_for_configuration {
    echo '// #threshold-declarations-end'
 }
 
+
 #-Main-Program----------------------------------#
 
 
 declare_constants "$@"
 
 # Aborts if either of the given command line arguments are invalid or malformed.
-abort_on_bad_paths_ "$configuration_file" "$ino_file" || exit $?
+abort_on_bad_path_ "$ino_file" --ino || exit $?
+abort_on_bad_path_ "$configuration_file" || exit $?
 abort_on_malformed_configuration_ "$configuration_file" || exit $?
 
 # Gets all of the lines containing threshold-declarations.

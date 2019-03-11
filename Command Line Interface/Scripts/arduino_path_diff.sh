@@ -36,24 +36,6 @@ function declare_constants {
 #-Functions-------------------------------------#
 
 
-# Prompts the user for input until either [ENTER] or [ESC] is pressed. If [ENTER] is pressed, the
-# function returns successfully, otherwise it aborts.
-function get_approval_or_exit_ {
-   # Creates an infinite loop.
-   while :; do
-      # Reads exactly one character.
-      read -s -n 1
-
-      # Checks for [ENTER] or [ESC].
-      case $REPLY in
-         '') break ;;
-         $'\e') exit 4 ;;
-      esac
-   done
-
-   return 0 # Exiting convention
-}
-
 # This function takes a list of device-paths. It prints out the same list, with any "tty"-prefixed
 # being merged onto a corresponding "cu"-prefixed device (if one exists).
 function merge_tty_onto_cu {
@@ -95,14 +77,14 @@ fi
 
 # Makes sure the devices is unplugged.
 echo "Unplug the Arduino then confirm [ENTER], or quit [ESC]" >&2
-get_approval_or_exit_
+get_approval_or_exit_ || exit 4
 
 # Gets the list of devices without the Arduino.
 devices_when_unplugged=`ls -1 "$device_folder"`
 
 # Makes sure the devices is plugged in.
 echo "Plug in the Arduino then confirm [ENTER], or quit [ESC]" >&2
-get_approval_or_exit_
+get_approval_or_exit_ || exit 4
 
 # Gets the list of devices with the Arduino.
 devices_when_plugged_in=`ls -1 "$device_folder"`

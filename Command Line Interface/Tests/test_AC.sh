@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Gets the directory of this script.
-dot="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 # Imports testing utilities.
 . "$dot/utilities.sh"
 
@@ -9,7 +9,7 @@ dot="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 #-Constant-Declarations-------------------------#
 
 
-readonly test_command="$dot/../apply_configuration.sh"
+readonly test_command="$dot/../Scripts/apply_configuration.sh"
 readonly test_ino_file="$dot/test_AC_ino_file.ino"
 readonly test_configuration="$dot/test_AC_configuration"
 
@@ -25,19 +25,25 @@ silent touch "$test_configuration"
 #-Tests-----------------------------------------#
 
 
+# Test: Too few arguments
+
+silent "$test_command" invalid_file
+report_if_status_is 1
+
+
 # Test: Invalid file-paths
 
 silent "$test_command" invalid_file "$test_ino_file"
-report_if_status_is 1
+report_if_status_is 2
 
 silent "$test_command" "$test_configuration" invalid_file
-report_if_status_is 1
+report_if_status_is 2
 
 
 # Test: Non-`.ino` file as second argument
 
 silent "$test_command" "$test_configuration" "$test_configuration"
-report_if_status_is 2
+report_if_status_is 3
 
 
 # Test: Malformed configuration entries
@@ -45,30 +51,30 @@ report_if_status_is 2
 echo 'invalid' > "$test_configuration"
 echo $'some valid: 123\nother valid: 001' > "$test_configuration"
 silent "$test_command" "$test_configuration" "$test_ino_file"
-report_if_status_is 3
+report_if_status_is 4
 
 echo 'invalid: 123;' > "$test_configuration"
 silent "$test_command" "$test_configuration" "$test_ino_file"
-report_if_status_is 3
+report_if_status_is 4
 
 echo 'invalid 456' > "$test_configuration"
 silent "$test_command" "$test_configuration" "$test_ino_file"
-report_if_status_is 3
+report_if_status_is 4
 
 echo ':nvalid: 456' > "$test_configuration"
 silent "$test_command" "$test_configuration" "$test_ino_file"
-report_if_status_is 3
+report_if_status_is 4
 
 echo 'invalid:9' > "$test_configuration"
 silent "$test_command" "$test_configuration" "$test_ino_file"
-report_if_status_is 3
+report_if_status_is 4
 
 
 # Test: Configuration with duplicate microphone-identifier
 
 echo $'duplicate: 1\nother: 2\nduplicate: 3' > "$test_configuration"
 silent "$test_command" "$test_configuration" "$test_ino_file"
-report_if_status_is 4
+report_if_status_is 5
 
 
 # Test: Valid, equally sized configurations
