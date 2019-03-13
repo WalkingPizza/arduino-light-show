@@ -13,10 +13,23 @@ alias abort_on_bad_path_='assert_path_validity_ "${BASH_SOURCE##*/}" '
 # Gets the directory of this script.
 dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
-# This function takes a regular expression and a file. It returns the lines immediately following
-# the lines matching the regular expression in the file.
-function lines_after {
-   egrep -A1 "$1" "$2" | egrep -v "$1|^--\$"
+# This function takes a string and a file. It returns all of the lines immediately following the
+# line containing only the given string upto the next empty line.
+# The funtion expects there to be exactly one match of the given string in the file.
+function lines_after_unique_ {
+   local match_line=`egrep -n "^$1\$" "$2"`
+
+   # Makes sure that there was exactly one match line.
+   if ! [ `wc -l <<< "$match_line"` -eq 1 ]; then
+      echo "Error: \`${FUNCNAME[0]}\` did not match exactly one line"
+      exit 1
+   fi
+
+   local list_start=$(( `cut -d : -f 1 <<< "$match_line"` + 1 ))
+
+   while read line; do
+      [ -n "$line" ] && echo "$line" || break
+   done <<< "`tail -n "+$list_start" "$location_file"`"
 }
 
 function regex_for {
@@ -24,15 +37,17 @@ function regex_for {
 
    case "$1" in
       --header-candidate)
-         lines_after '^Threshold declaration header candidate:$' "$regex_file" ;;
+         lines_after_unique_ 'Threshold declaration header candidate:' "$regex_file" ;;
       --header)
-         lines_after '^Threshold declaration header:$' "$regex_file" ;;
+         lines_after_unique_ 'Threshold declaration header:' "$regex_file" ;;
       --body)
-         lines_after '^Threshold declaration body:$' "$regex_file" ;;
+         lines_after_unique_ 'Threshold declaration body:' "$regex_file" ;;
       --end-tag)
-         lines_after '^Threshold declarations end tag:$' "$regex_file" ;;
+         lines_after_unique_ 'Threshold declarations end tag:' "$regex_file" ;;
       --configuration-entry)
-         lines_after '^Threshold configuration entry:$' "$regex_file" ;;
+         lines_after_unique_ 'Threshold configuration entry:' "$regex_file" ;;
+      --uninstall-arduino-cli-flag-tag)
+         lines_after_unique_ 'Uninstall Arduino-CLI flag tag:' "$regex_file" ;;
       *)
          echo "Error: \`${FUNCNAME[0]}\` received invalid flag \"$1\""
          return 1
@@ -40,36 +55,39 @@ function regex_for {
    return 0
 }
 
-# These locations are relative to the repository if contained within it.
+# These locations are relative to the CLI-folder if contained within it.
 function location_of {
    local location_file="$dot/file_locations"
-   local cli_directory=`lines_after '^Repository CLI-directory:$' "$location_file"`
+   local raw_paths=''
 
    case "$1" in
+      --repo-cli-directory)
+         raw_paths=`lines_after_unique_ 'Repository CLI-directory:' "$location_file"` ;;
       --cli-command)
-         "$cli_directory/`lines_after '^CLI-command:$' "$location_file"`" ;;
+         raw_paths=`lines_after_unique_ 'CLI-command:' "$location_file"` ;;
       --cli-uninstaller)
-         "$cli_directory/`lines_after '^CLI-uninstaller:$' "$location_file"`" ;;
+         raw_paths=`lines_after_unique_ 'CLI-uninstaller:' "$location_file"` ;;
       --cli-scripts)
-         local match_line=`egrep -n '^CLI-scripts:$' "$location_file"`
-         local list_start=$(( `cut -d : -f 1 <<< "$match_line"` + 1 ))
-
-         while read line; do
-            [ -n "$line" ] && echo "$cli_directory/$line" || break
-         done <<< "`tail -n +$list_start $location_file`"
-         ;;
+         raw_paths=`lines_after_unique_ 'CLI-scripts:' "$location_file"` ;;
+      --cli-utilities)
+         raw_paths=`lines_after_unique_ 'CLI-utilities:' "$location_file"`;;
       --cli-command-destination)
-         lines_after '^Destination for CLI-command:$' "$location_file" ;;
-      --cli-scripts-destination)
-         lines_after '^Destination for CLI-scripts:$' "$location_file" ;;
+         raw_paths=`lines_after_unique_ 'CLI-command destination:' "$location_file"` ;;
+      --cli-supporting-files-destination)
+         raw_paths=`lines_after_unique_ 'CLI-supporting files destination:' "$location_file"` ;;
       --arduino-cli-source)
-         lines_after '^Arduino-CLI source:$' "$location_file" ;;
+         raw_paths=`lines_after_unique_ 'Arduino-CLI source:' "$location_file"` ;;
       --arduino-cli-destination)
-         lines_after '^Arduino-CLI destination:$' "$location_file" ;;
+         raw_paths=`lines_after_unique_ 'Arduino-CLI destination:' "$location_file"` ;;
       *)
          echo "Error: \`${FUNCNAME[0]}\` received invalid flag \"$1\""
          return 1
    esac
+
+   # Performs tilde expansion and prints the result.
+   while read path; do
+      [ "${path:0:1}" = '~' ] && echo "$HOME${path:1}" || echo "$path"
+   done <<< "$raw_paths"
    return 0
 }
 

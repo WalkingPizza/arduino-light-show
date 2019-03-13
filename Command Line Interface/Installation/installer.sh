@@ -3,18 +3,20 @@
 # This script installs all of the components needed for the Arduino Light Show CLI to run.
 # Everything is kept in the "~/Library/Application Scripts/Arduino Light Show CLI" directory.
 
-# TODO: Add proper documentation to this file
-
-# TODO: Add an uninstaller that also remembers whether the Arduino-CLI was preinstalled
+# TODO: Add documentation
+# TODO: Add a different supporting files destination for Linux
 
 
 #-Constants-------------------------------------#
 
 
-readonly repository_location='https://github.com/WalkingPizza/arduino-light-show/tree/master'
-readonly repository_folder='arduino-light-show'
-readonly cli_utilities='Utilities/utilites.sh'
-readonly working_directory=`mktemp -d`
+# The function wrapping all constant-declarations for this script.
+function declare_constants {
+   readonly repository_location='https://github.com/WalkingPizza/arduino-light-show/tree/master'
+   readonly repository_folder='arduino-light-show'
+   readonly cli_utilities='Command Line Interface/Utilities/utilities.sh'
+   readonly working_directory=`mktemp -d`
+}
 
 
 #-Functions-------------------------------------#
@@ -22,14 +24,15 @@ readonly working_directory=`mktemp -d`
 
 trap cleanup EXIT
 function cleanup {
-   rm -r "$working_directory"
+   rm -rf "$working_directory"
 }
 
 function setup_installation_environment_ {
    # Clone the repository into a specific folder in the working directory.
    cd "$working_directory"
 
-   if ! git clone "$repository_location:$repository_folder"; then
+   # Downloads the current version of the repository.
+   if ! git clone "$repository_location" "$repository_folder"; then
       echo "Error: could not clone repository \"$repository_location\"" >&2
       return 1
    fi
@@ -38,18 +41,18 @@ function setup_installation_environment_ {
    . "$repository_folder/$cli_utilities"
 
    # Gets the folder in which the CLI is supposed to be installed.
-   local cli_scripts_destination=`location_of --cli-scripts-destination`
+   local cli_supporing_files_destination=`location_of --cli-supporting-files-destination`
 
-   # Create or empty the CLI-folder depending on whether exists, or abort if the user chooses
+   # Create or empty the CLI-folder depending on whether one exists, or abort if the user chooses
    # to.
-   if [ -d "$cli_scripts_destination" ]; then
+   if [ -d "$cli_supporing_files_destination" ]; then
       echo 'It seems you have already run this installation.' >&2
       echo 'Do you want to reinstall? [ENTER or ESC]'
       get_approval_or_exit_ || return 2
 
-      rm -r "$cli_scripts_destination/"*
+      rm -r "$cli_supporing_files_destination/"*
    else
-      mkdir "$cli_scripts_destination"
+      mkdir -p "$cli_supporing_files_destination"
    fi
 }
 
@@ -65,7 +68,7 @@ function install_arduino_cli_ {
    fi
 
    # Unzip and remove the archive.
-   unzip $archive -d $unzipped_folder
+   unzip $archive -d $unzipped_folder &> /dev/null
    rm $archive
 
    # Abort if the archive contained more than one file.
@@ -81,28 +84,44 @@ function install_arduino_cli_ {
    rm -r $unzipped_folder
 
    # Make sure that the Ardunio-CLI is nor properly installed.
-   if ! command arduino-cli &> /dev/null; then
+   if ! command -v arduino-cli &> /dev/null; then
       echo 'Error: Arduino CLI installation failed' >&2
       return 5
    fi
 }
 
-function set_uninstaller_flags {
-   return
-   # TODO: Implement
+function set_uninstall_ardunio_cli_flag {
+   uninstaller_script="$repository_folder/$repository_cli_directory/`location_of --cli-uninstaller`"
+   flag_tag_line=$(egrep -n "$(regex_for --uninstall-arduino-cli-flag-tag)" "$uninstaller_script")
+   flag_line_number=`cut -d : -f 1 <<< "$flag_tag_line"`
+
+   # Replace "=false" with "=true" in the uninstaller-file's flag line.
+   sed -i '' -e "$flag_line_number s/=false/=true/" "$uninstaller_script"
 }
 
 function install_lightshow_cli {
-   # Gets the folder in which the CLI is supposed to be installed.
-   local cli_scripts_destination=`location_of --cli-scripts-destination`
+   # Get the folder in which the CLI is supposed to be installed.
+   local cli_supporing_files_destination=`location_of --cli-supporting-files-destination`
+   # Get the relative path to the CLI-folder within the repo.
+   local repository_cli_directory=`location_of --repo-cli-directory`
 
-   # Move all of the files needed for the CLI to work to the CLI-folder.
+   # Move all of the CLI-scripts to the CLI-folder.
    while read script_location; do
-      mv "$repository_folder/$script_location" "$cli_scripts_destination"
+      local destination="$cli_supporing_files_destination/$script_location"
+      mkdir -p "`dirname "$destination"`"
+      mv "$repository_folder/$repository_cli_directory/$script_location" "$destination"
    done <<< "`location_of --cli-scripts`"
 
-   # Moves the CLI-command to its intended directory.
-   mv "$repository_folder/`location_of --cli-command`" |
+   # Copy all of the CLI-utilities to the CLI-folder (as they might still be needed for the
+   # execution of this script).
+   while read utility_location; do
+      local destination="$cli_supporing_files_destination/$utility_location"
+      mkdir -p "`dirname "$destination"`"
+      cp -R "$repository_folder/$repository_cli_directory/$utility_location" "$destination"
+   done <<< "`location_of --cli-utilities`"
+
+   # Move the CLI-command to its intended directory.
+   mv "$repository_folder/$repository_cli_directory/`location_of --cli-command`" \
       "`location_of --cli-command-destination`"
 }
 
@@ -110,21 +129,23 @@ function install_lightshow_cli {
 #-Main-Program----------------------------------#
 
 
+declare_constants "$@"
+
 # Abort if Git is not installed.
-if ! command git &> /dev/null; then
+if ! command -v git &> /dev/null; then
    echo 'The Arduino Light Show installer requires Git. Please install it first.'
    exit 6
 fi
 
 # Setup directories, functions and variables needed for the installation process.
-setup_installation_environment_ || exit $?
+setup_installation_environment_ || exit $?
 
 # Install the Arduino-CLI if it is not yet installed.
-if ! command arduino-cli &> /dev/null; then
+if ! command -v arduino-cli &> /dev/null; then
    echo 'Installing Arduino CLI...'
-   install_arduino_cli_ || exit $?
+   install_arduino_cli_ || exit $?
 
-   set_uninstaller_flags
+   set_uninstall_ardunio_cli_flag
 fi
 
 # Install the Arduino Light Show CLI.

@@ -113,7 +113,7 @@ declaration_line_numbers=`declaration_line_numbers "$ino_file"`
 # Removes all of the current threshold-declarations (in reverse order, so removal of one line does
 # not affect the line number of another).
 while read line_to_delete; do
-   sed -i -e "${line_to_delete}d" "$ino_file"
+   sed -i '' -e "${line_to_delete}d" "$ino_file"
 done <<< "`tail -r <<< "$declaration_line_numbers"`"
 
 # Determines where to insert the new threshold-declarations.

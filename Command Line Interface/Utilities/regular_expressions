@@ -14,3 +14,6 @@ Threshold declarations end tag:
 
 Threshold configuration entry:
 ^[^:\"]+:\s+(0|([1-9][0-9]*))\s*$
+
+Uninstall Arduino-CLI flag tag:
+^\s*#\s+UNINSTALL-ARDUINO-CLI-FLAG\s*$

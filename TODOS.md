@@ -15,15 +15,11 @@
 * line 1: Add documentation
 ---
 ### `installer.sh`:
-* line 6: Add proper documentation to this file
-* line 8: Add an uninstaller that also remembers whether the Arduino-CLI was preinstalled
-* line 92:    Implement
+* line 6: Add documentation
+* line 7: Add a different supporting files destination for Linux
 ---
 ### `regular_expressions`:
 * line 1: Add documentation
----
-### `test_AC.sh`:
-* line 195: Find out why "test_AC_ino_file.ino-e" appears when running this test
 ---
 ### `test_APD.sh`:
 * line 34: Implement using TCL's expect
@@ -37,5 +33,4 @@
 * line 73: Implement using TCL's expect
 ---
 ### `utilities.sh`:
-* line 3: Add documentation
 * line 3: Add documentation

@@ -192,7 +192,4 @@ report_if_output_matches "`cat "$test_ino_file"`" "$expected_output"
 silent rm "$test_ino_file"
 silent rm "$test_configuration"
 
-# TODO: Find out why "test_AC_ino_file.ino-e" appears when running this test
-rm "$dot/test_AC_ino_file.ino-e"
-
 exit 0

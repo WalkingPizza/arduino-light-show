@@ -17,11 +17,16 @@ Scripts/configure_thresholds.sh
 Scripts/threshold_configuration.sh
 Installation/uninstaller.sh
 
-Destination for CLI-command:
+CLI-utilities:
+Utilities/utilities.sh
+Utilities/regular_expressions
+Utilities/file_locations
+
+CLI-command destination:
 /usr/local/bin
 
-Destination for CLI-scripts:
-$HOME/Library/Application Scripts/Arduino Light Show CLI
+CLI-supporting files destination:
+~/Library/Application Scripts/Arduino Light Show CLI
 
 Arduino-CLI source:
 https://downloads.arduino.cc/arduino-cli/arduino-cli-latest-osx.zip
