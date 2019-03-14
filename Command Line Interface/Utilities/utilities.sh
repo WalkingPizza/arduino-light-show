@@ -27,9 +27,9 @@ function lines_after_unique_ {
 
    local list_start=$(( `cut -d : -f 1 <<< "$match_line"` + 1 ))
 
-   while read line; do
+   while read -r line; do
       [ -n "$line" ] && echo "$line" || break
-   done <<< "`tail -n "+$list_start" "$location_file"`"
+   done <<< "`tail -n "+$list_start" "$2"`"
 }
 
 function regex_for {

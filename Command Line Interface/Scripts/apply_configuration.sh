@@ -39,7 +39,7 @@ function declare_constants {
 
 function abort_on_malformed_configuration_ {
    # Aborts if the configuration file contains invalid entries.
-   if egrep -v "`regex_for --configuration-entry`" "$1"; then
+   if egrep -vq "`regex_for --configuration-entry`" "$1"; then
       echo "Error: \`$script_name\` received malformed configuration file" >&2
       exit 4
    fi

@@ -15,8 +15,9 @@
 * line 1: Add documentation
 ---
 ### `installer.sh`:
-* line 6: Add documentation
-* line 7: Add a different supporting files destination for Linux
+* line 17: Add return status documentation
+* line 19: Add a different "supporting files" destination for Linux
+* line 20: Figure out a good silencing strategy
 ---
 ### `regular_expressions`:
 * line 1: Add documentation
@@ -31,6 +32,9 @@
 * line 61: Implement using TCL's expect
 * line 68: Implement using TCL's expect
 * line 73: Implement using TCL's expect
+---
+### `uninstaller.sh`:
+* line 11: Add return status documentation
 ---
 ### `utilities.sh`:
 * line 3: Add documentation
