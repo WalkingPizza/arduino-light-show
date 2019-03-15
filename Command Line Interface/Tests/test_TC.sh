@@ -1,5 +1,9 @@
 #!/bin/bash
 
+
+#-Preliminaries---------------------------------#
+
+
 # Gets the directory of this script.
 dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 # Imports testing utilities.
@@ -17,22 +21,16 @@ readonly test_ino_file="$dot/test_TC_ino_file.ino"
 
 
 echo "* Testing \``basename "$test_command"`\` in \`${BASH_SOURCE##*/}\`:"
-silent touch "$test_ino_file"
+silent- touch "$test_ino_file"
 
 
 #-Tests-----------------------------------------#
 
 
-# Test: No command line argument
-
-silent "$test_command"
-report_if_status_is 1
-
-
 # Test: Non-existing file
 
-silent "$test_command" invalid_file_path
-report_if_status_is 2
+silent- "$test_command" invalid_file_path
+report_if_last_status_was 1
 
 
 # Test: Non-`.ino` file
@@ -42,19 +40,19 @@ temporary_file=`mktemp`
 non_ino_file="${temporary_file}_"
 mv "$temporary_file" "$non_ino_file"
 
-silent "$test_command" "$non_ino_file"
-report_if_status_is 3
+silent- "$test_command" "$non_ino_file"
+report_if_last_status_was 3
 
 # Removes the temporary file.
-silent rm "$non_ino_file"
+silent- rm "$non_ino_file"
 
 
 # Test: Existing (empty) `.ino`-file
 
 > "$test_ino_file"
 
-silent "$test_command" "$test_ino_file"
-report_if_status_is 0
+silent- "$test_command" "$test_ino_file"
+report_if_last_status_was 0
 
 
 # Test: Duplicate microphone identifiers
@@ -65,8 +63,8 @@ cat << END > "$test_ino_file"
 // #threshold "A"
 END
 
-silent "$test_command" "$test_ino_file"
-report_if_status_is 4
+silent- "$test_command" "$test_ino_file"
+report_if_last_status_was 4
 
 
 # Test: Malformed declaration body
@@ -79,8 +77,8 @@ const int a = 1;
 int b = 2;
 END
 
-silent "$test_command" "$test_ino_file"
-report_if_status_is 5
+silent- "$test_command" "$test_ino_file"
+report_if_last_status_was 5
 
 
 # Test: Perfect `.ino`-file
@@ -93,7 +91,7 @@ const int a = 1;
 const int bc = 2;
 END
 
-output=`silent --stderr "$test_command" "$test_ino_file"`
+output=`silent- --stderr "$test_command" "$test_ino_file"`
 report_if_output_matches "$output" $'A: 1\nB C: 2'
 
 
@@ -126,12 +124,12 @@ int thisDoesntMatter = -1;
 char againDoesntMatter = 'a';
 END
 
-output=`silent --stderr "$test_command" "$test_ino_file"`
+output=`silent- --stderr "$test_command" "$test_ino_file"`
 report_if_output_matches "$output" $'#threshold #1: 1\nvalid threshold: 123456789\nb: 123'
 
 
 #-Test-Cleanup------------------------------------#
 
 
-silent rm "$test_ino_file"
+silent- rm "$test_ino_file"
 exit 0

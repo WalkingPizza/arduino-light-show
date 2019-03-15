@@ -12,11 +12,6 @@
 # * 2: No fitting Arduino-device was found.
 # * 3: Multiple fitting Arduino-devices were found.
 # * 4: The user chose to quit the program.
-#
-# Exiting convention:
-# Functions whose names contain a trailing underscore, require exiting the script on non-zero exit
-# status. This only requires action when this function is run in a subshell. So e.g. if
-# `my_function_` returns an error code of 1, the program should be exited.
 
 
 #-Constants-------------------------------------#
@@ -77,14 +72,14 @@ fi
 
 # Makes sure the devices is unplugged.
 echo "Unplug the Arduino then confirm [ENTER], or quit [ESC]" >&2
-get_approval_or_exit_ || exit 4
+succeed_on_approval_ || exit 4
 
 # Gets the list of devices without the Arduino.
 devices_when_unplugged=`ls -1 "$device_folder"`
 
 # Makes sure the devices is plugged in.
 echo "Plug in the Arduino then confirm [ENTER], or quit [ESC]" >&2
-get_approval_or_exit_ || exit 4
+succeed_on_approval_ || exit 4
 
 # Gets the list of devices with the Arduino.
 devices_when_plugged_in=`ls -1 "$device_folder"`

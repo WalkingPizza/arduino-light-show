@@ -1,18 +1,11 @@
 #!/bin/bash
 
-# This script...
-#
-# Exit status:
-# * 0:
-# * 1:
-# * 2:
-#
-# Exiting convention:
-# Functions whose names contain a trailing underscore, require exiting the script on non-zero exit
-# status. This only requires action when this function is run in a subshell. So e.g. if
-# `my_function_` returns an error code of 1, the program should be exited.
 
 # TODO: Add documentation to this file
+
+
+#-Preliminaries---------------------------------#
+
 
 # Gets the directory of this script.
 dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
@@ -39,7 +32,7 @@ function declare_constants {
 
 function abort_on_malformed_configuration_ {
    # Aborts if the configuration file contains invalid entries.
-   if egrep -vq "`regex_for --configuration-entry`" "$1"; then
+   if egrep -vq "`regex_for_ --configuration-entry`" "$1"; then
       echo "Error: \`$script_name\` received malformed configuration file" >&2
       exit 4
    fi
@@ -66,10 +59,10 @@ function declaration_line_numbers {
    line_counter=1
 
    while read line; do
-      if egrep -q "`regex_for --header`" <<< "$line"; then
+      if egrep -q "`regex_for_ --header`" <<< "$line"; then #NF
          echo $line_counter
          echo $(( line_counter + 1 ))
-      elif egrep -q "`regex_for --end-tag`" <<< "$line"; then
+      elif egrep -q "`regex_for_ --end-tag`" <<< "$line"; then #NF
          return
       fi
 
@@ -103,8 +96,8 @@ function threshold_declarations_for_configuration {
 declare_constants "$@"
 
 # Aborts if either of the given command line arguments are invalid or malformed.
-abort_on_bad_path_ "$ino_file" --ino || exit $?
-abort_on_bad_path_ "$configuration_file" || exit $?
+assert_path_validity_ "$ino_file" --ino || exit $?
+assert_path_validity_ "$configuration_file" || exit $?
 abort_on_malformed_configuration_ "$configuration_file" || exit $?
 
 # Gets all of the lines containing threshold-declarations.

@@ -1,16 +1,5 @@
 #!/bin/bash
 
-# This script...
-#
-# Exit status:
-# * 0:
-# * 1:
-# * 2:
-#
-# Exiting convention:
-# Functions whose names contain a trailing underscore, require exiting the script on non-zero exit
-# status. This only requires action when this function is run in a subshell. So e.g. if
-# `my_function_` returns an error code of 1, the program should be exited.
 
 # TODO: Add documentation to this file
 

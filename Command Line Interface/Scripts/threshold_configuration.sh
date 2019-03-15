@@ -18,17 +18,15 @@
 #
 # Exit status:
 # * 0: A threshold-configuration file could successfully be generated.
-# * 1: No program-file was given as argument
-# * 2: The given program-file path is invalid or not readable
+# * 1: The given program-file path is invalid or not readable
 # * 3: The given program-file path is not a `.ino`-file
 # * 4: Duplicate microphone-identifiers were detected in the `.ino`-file
 # * 5: Malformed threshold-declaration bodies were detected in the `.ino`-file
 # * 6: Program-internal error
-#
-# Exiting convention:
-# Functions whose names contain a trailing underscore, require exiting the script on non-zero exit
-# status. This only requires action when this function is run in a subshell. So e.g. if
-# `my_function_` returns an error code of 1, the program should be exited.
+
+
+#-Preliminaries---------------------------------#
+
 
 # Gets the directory of this script.
 dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
@@ -95,7 +93,7 @@ function abort_on_duplicate_identifiers_ {
 # an error to stderr and aborts.
 function abort_on_malformed_bodies_ {
    # Gets the lines containing malformed threshold-declaration bodies.
-   local body_pattern=`regex_for --body`
+   local body_pattern=`regex_for_ --body`
    local malformed_bodies=`egrep -v "^\s*[0-9]+\s*:${body_pattern:1}" <<< "$1"`
 
    # Returns successfully if there are no malformed bodies.
@@ -126,9 +124,9 @@ function _numbered_declaration_bodies {
          last_matched=false
       else
          # Checks for threshold-declaration headers, or the end tag.
-         if egrep -q "`regex_for --header`" <<< "$line"; then
+         if egrep -q "`regex_for_ --header`" <<< "$line"; then
             last_matched=true
-         elif egrep -q "`regex_for --end-tag`" <<< "$line"; then
+         elif egrep -q "`regex_for_ --end-tag`" <<< "$line"; then
             return
          fi
       fi
@@ -144,9 +142,9 @@ function _numbered_declaration_bodies {
 function numbered_declaration_components {
    # Sets the appropriate regex-pattern
    if [ "$1" = '--header-candidates' ]; then
-      local pattern=`regex_for --header-candidate`
+      local pattern=`regex_for_ --header-candidate`
    elif [ "$1" = '--headers' ]; then
-      local pattern=`regex_for --header`
+      local pattern=`regex_for_ --header`
    elif [ "$1" = '--bodies' ]; then
       echo "`_numbered_declaration_bodies "$2"`"
       return
@@ -160,7 +158,7 @@ function numbered_declaration_components {
       # Checks for matching lines, or the end tag.
       if egrep -q "$pattern" <<< "$line"; then
          echo "$line_counter:$line"
-      elif egrep -q "`regex_for --end-tag`" <<< "$line"; then
+      elif egrep -q "`regex_for_ --end-tag`" <<< "$line"; then
          return
       fi
 
@@ -219,7 +217,7 @@ function get_threshold_values_ {
 declare_constants "$@"
 
 # Establishes that an existing `.ino`-file was passed, and creates constants for the program.
-abort_on_bad_path_ "$ino_file" --ino || exit $?
+assert_path_validity_ "$ino_file" --ino || exit $?
 
 # Gets the lists of microphone-identifiers.
 microphone_identifiers=`get_microphone_identifiers_ "$ino_file"` || exit $?

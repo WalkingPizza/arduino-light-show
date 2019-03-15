@@ -1,5 +1,9 @@
 #!/bin/bash
 
+
+#-Preliminaries---------------------------------#
+
+
 # Gets the directory of this script.
 dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 # Imports testing utilities.
@@ -17,7 +21,7 @@ readonly test_device_folder="$dot/test_APD_devices"
 
 
 echo "Testing \``basename "$test_command"`\` in \`${BASH_SOURCE##*/}\`:"
-silent mkdir "$test_device_folder"
+silent- mkdir "$test_device_folder"
 
 
 #-Tests-----------------------------------------#
@@ -25,8 +29,8 @@ silent mkdir "$test_device_folder"
 
 # Test: Invalid device-folder path
 
-silent "$test_command" invalid_directory_path
-report_if_status_is 1
+silent- "$test_command" invalid_directory_path
+report_if_last_status_was 1
 
 
 # Test: No added device
@@ -52,5 +56,5 @@ report_if_status_is 1
 #-Test-Cleanup------------------------------------#
 
 
-silent rm -r "$test_device_folder"
+silent- rm -r "$test_device_folder"
 exit 0

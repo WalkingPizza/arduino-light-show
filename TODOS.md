@@ -3,38 +3,28 @@
    
 ---
 ### `apply_configuration.sh`:
-* line 128: Remove any uses of "threshold_declaration_[n >= number of declarations]_value"
-* line 15: Add documentation to this file
+* line 121: Remove any uses of "threshold_declaration_[n >= number of declarations]_value"
+* line 4: Add documentation to this file
 ---
 ### `configure_thresholds.sh`:
-* line 15: Add documentation to this file
-* line 48: Get the Arduino's path
-* line 49: Compile and upload the program file to the Arduino
----
-### `file_locations`:
-* line 1: Add documentation
+* line 37: Get the Arduino's path
+* line 38: Compile and upload the program file to the Arduino
+* line 4: Add documentation to this file
 ---
 ### `installer.sh`:
-* line 17: Add return status documentation
-* line 19: Add a different "supporting files" destination for Linux
-* line 20: Figure out a good silencing strategy
----
-### `regular_expressions`:
-* line 1: Add documentation
+* line 16: Add a different "supporting files" destination for Linux
+* line 17: Figure out a good silencing strategy
 ---
 ### `test_APD.sh`:
-* line 34: Implement using TCL's expect
-* line 39: Implement using TCL's expect
-* line 44: Implement using TCL's expect
-* line 49: Implement using TCL's expect
+* line 38: Implement using TCL's expect
+* line 43: Implement using TCL's expect
+* line 48: Implement using TCL's expect
+* line 53: Implement using TCL's expect
 ---
 ### `test_APU.sh`:
-* line 61: Implement using TCL's expect
-* line 68: Implement using TCL's expect
-* line 73: Implement using TCL's expect
+* line 65: Implement using TCL's expect
+* line 72: Implement using TCL's expect
+* line 77: Implement using TCL's expect
 ---
 ### `uninstaller.sh`:
-* line 11: Add return status documentation
----
-### `utilities.sh`:
-* line 3: Add documentation
+* line 10: Bug: moving doesn't occur if the trash already contains a file/folder of the same name

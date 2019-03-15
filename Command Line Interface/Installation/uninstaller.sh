@@ -6,9 +6,12 @@
 # * the Arduino Light Show CLI's supporting files
 # * the Arduino CLI, if it had to be installed by the installer script
 # Any of these files are only moved to the trash-folder, so the process can be undone manually.
-#
-# Return status:
-# TODO: Add return status documentation
+
+# TODO: Bug: moving doesn't occur if the trash already contains a file/folder of the same name
+
+
+#-Preliminaries---------------------------------#
+
 
 # Gets the directory of this script.
 dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
@@ -20,6 +23,10 @@ dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
 
 # The function wrapping all constant-declarations for this script.
+#
+# Return status:
+# 0: success
+# 1: the script is running on something else than macOS or Linux
 function declare_constants_ {
    # A flag set by the installer script, determining whether the Arduino CLI should be deleted upon
    # uninstallation as well.
@@ -34,7 +41,7 @@ function declare_constants_ {
       *) echo 'Error: uninstallation is not possible on the current operating system'; return 1
    esac
 
-   return 0 # EHC
+   return 0
 }
 
 
@@ -46,19 +53,20 @@ declare_constants_ "$@" || exit 1
 # Gets confirmation from the user that uninstallation should be performed. If approval is not given
 # an exit on status 1 occurs.
 echo 'Are you sure you want to uninstall the Arduino Light Show CLI? [ENTER or ESC]'
-get_approval_or_exit_ || exit 2
+succeed_on_approval_ || exit 2
 echo 'Uninstalling...'
 
 # Deletes the Arduino CLI as specified by <utility file: file locations>, if the "uninstall Arduino
 # CLI"-flag is set.
 if [ "$uninstall_arduino_cli" = true ]; then
-   mv -f "`location_of --arduino-cli-destination`" "$trash" &> /dev/null
+   mv -f "`location_of_ --arduino-cli-destination`" "$trash" &> /dev/null
 fi
 
 # Deletes the CLI script as specified by <utility file: file locations>.
-mv -f "`location_of --cli-command-destination`/`location_of --cli-command`" "$trash" &> /dev/null
+mv -f "`location_of_ --cli-command-destination`/`location_of_ --cli-command`" "$trash" &> /dev/null
 # Deletes the CLI's supporting files folder as specified by <utility file: file locations>.
-mv -f "`location_of --cli-supporting-files-destination`" "$trash" &> /dev/null
+mv -f "`location_of_ --cli-supporting-files-destination`" "$trash" &> /dev/null
 
 echo 'Uninstalling complete'
-exit 0 # EHC
+
+exit 0

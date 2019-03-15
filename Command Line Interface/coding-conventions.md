@@ -6,16 +6,16 @@ scripts.
 ---
 
 ## File Structure
-Scripts are structured into:
-* a header containing documentation and imports
+Scripts, except for [pseudo-libraries](#pseudolibraries) and tests, are structured into:
+* preliminaries
 * constant declarations
 * function declarations
 * the main script
 
-#### Header:
-The header usually contains a description of the script's functionality including expected
-arguments, type of output and explanations of possible return status. Imports in the header are
-achieved by sourcing other scripts.
+#### Preliminaries:
+The preliminaries section contains imports of [pseudo-libraries](#pseudolibraries) and the
+declaration of the `dot` variable. The `dot` variable contains the path to the script file in which
+it is declared. This is useful when referring to other paths, based on the location of the script.
 
 #### Constants:
 Constants are declared in a `declare_constants` function which expects all of the script's command
@@ -25,8 +25,10 @@ function itself. Constant declarations use `readonly` instead of `declare -r`, s
 declarations are global. The `declare_constants` may be failable.
 
 #### Functions:
-Functions are declared with the `function` keyword. Furthermore they set their return status as
-described in [Error Handeling](#errorhandeling).
+Functions are declared with the `function` keyword. Leading and trailing underscores in functions'
+names have semantic relevance, as described in [pseudo-libraries](#pseudolibraries) and
+[error handeling](#errorhandeling). Functions are preceded by documentation containing expected
+arguments and output (and return status if they are failable).
 
 #### Main:
 The main section of the script contains the equivalent of a `main`-function in other languages. It
@@ -37,8 +39,25 @@ failing return status produced by calling failable functions.
 
 <a name="errorhandeling"></a>
 ## Error Handeling
-Functions whose names end on an underscore can fail, indicated by returning on a non-zero return
-status. Functions without a trailing underscore should be expected to succeed and return `0`.
-Occurrences of `return 0` or `exit 0` for the purpose of adhering to this convention are annotated
-with `# EHC` (meaning _error handeling convention_). Call sites of failable functions whose failures
-are not handeled are annotated with `# NF` (meaning _non-fatal_).
+Functions whose names end on an underscore can fail, indicated by returning on a non-zero or
+"failing" return status. Functions without a trailing underscore should be expected to succeed and
+return `0`. Functions whose name end on a hyphen reflect the return status of a given command, and
+are therefore failable if and only if the given command is failable.
+
+---
+
+## Variable Declarations
+Variables are declared as _readonly_ whenever possible. For global variables this implies the use of
+the `readonly` keyword, for local variables the `-r` flag is set. Variables within functions are
+always declared as _local_.
+
+---
+
+<a name="pseudolibraries"></a>
+## Pseudo-Libraries
+Certain functions are used across multiple scripts. These functions live in "libraries", which are
+simply scripts containing only function and alias declarations. These libraries are imported by
+sourcing the execution of the script (`source <library>`/`. <library>`).
+Libraries are layed out slightly differently than other script files. Constants are not declared in
+a seperate function, and constants not meant for use outside of the script are preceded by an
+underscore in there name. Certain functions in libraries have convenience-aliases meant to be used to call the given function. Such functions are denoted by a leading underscore in their name, and their corresponding alias is declared right above the function declaration.

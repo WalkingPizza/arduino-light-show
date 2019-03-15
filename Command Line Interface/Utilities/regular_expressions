@@ -1,4 +1,10 @@
-# TODO: Add documentation
+# This file acts as the configuration and reference document for particular regular expressions. It
+# can be used by CLI-scripts to enable consistent search for certain patterns.
+#
+# Regular expression patterns are declared within "pattern declarations". A pattern declaration
+# consists of a unique identifier, followed by the corresponding pattern-string. Pattern
+# declarations must be seperated by empty lines.
+
 
 Threshold declaration header candidate:
 ^\s*//\s*#threshold\s+
