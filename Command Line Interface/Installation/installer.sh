@@ -54,8 +54,8 @@ function setup_installation_environment_ {
 
    # Tries to download the repository into the "$repository_folder.zip" archive. If that is not
    # possible an error is printed and a return on failure occurs.
-   if ! curl -Lk --progress-bar -o "$repository_folder.zip" "$repository_location"; then
-      echo "Error: failed to download repository at \"$repository_location\"" >&2
+   if ! curl -Lk --progress-bar -o "$repository_folder.zip" "$repository_url"; then
+      echo "Error: failed to download repository at \"$repository_url\"" >&2
       return 1
    fi
 
