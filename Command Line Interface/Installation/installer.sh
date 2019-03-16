@@ -23,8 +23,8 @@
 function declare_constants {
    # A URL to the Arduino Light Show repository.
    readonly repository_url='https://github.com/WalkingPizza/arduino-light-show/archive/master.zip'
-   # The name of the folder into which the repository above will be placed.
-   readonly repository_folder='arduino-light-show'
+   # The name of the folder as which the repository above will be unarchived.
+   readonly repository_folder='arduino-light-show-master'
    # A hardcoded path to the CLI-utilities, needed for bootstrapping the installation.
    readonly cli_utilities='Command Line Interface/Utilities/utilities.sh'
    # A unique temporary working directory used as sandbox for the installation process.
@@ -62,7 +62,7 @@ function setup_installation_environment_ {
    echo 'Unpacking Arduino Light Show CLI...'
 
    # Unzips the archive into the "$repository_folder" and removes the archive.
-   silently- unzip "$repository_folder.zip" -d "$repository_folder"
+   unzip "$repository_folder.zip" &> /dev/null
    rm "$repository_folder.zip"
 
    # Imports CLI-utilities.
@@ -81,12 +81,12 @@ function setup_installation_environment_ {
       succeed_on_approval_ || return 2
 
       # This is only executed if the user chose to reinstall.
-      # Removes all of the files contained within the CLI's supporting files folder.
-      rm -r "$cli_supporing_files_destination/"*
-   else
-      # Creates the CLI's supporting files folder.
-      mkdir -p "$cli_supporing_files_destination"
+      # Removes the exiting CLI's supporting files folder.
+      rm -r "$cli_supporing_files_destination/"
    fi
+
+   # Creates the CLI's supporting files folder.
+   mkdir -p "$cli_supporing_files_destination"
 
    return 0
 }

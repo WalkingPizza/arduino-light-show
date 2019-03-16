@@ -24,6 +24,3 @@
 * line 68: Implement using TCL's expect
 * line 75: Implement using TCL's expect
 * line 80: Implement using TCL's expect
----
-### `uninstaller.sh`:
-* line 10: Bug: moving doesn't occur if the trash already contains a file/folder of the same name

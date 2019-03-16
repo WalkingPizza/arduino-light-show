@@ -7,8 +7,6 @@
 # * the Arduino CLI, if it had to be installed by the installer script
 # Any of these files are only moved to the trash-folder, so the process can be undone manually.
 
-# TODO: Bug: moving doesn't occur if the trash already contains a file/folder of the same name
-
 
 #-Preliminaries---------------------------------#
 
@@ -56,19 +54,25 @@ declare_constants_ "$@" || exit 1
 # an exit on status 1 occurs.
 echo 'Are you sure you want to uninstall the Arduino Light Show CLI? [ENTER or ESC]'
 succeed_on_approval_ || exit 2
-echo 'Uninstalling...'
 
 # Deletes the Arduino CLI as specified by <utility file: file locations>, if the "uninstall Arduino
 # CLI"-flag is set.
 if [ "$uninstall_arduino_cli" = true ]; then
+   echo 'Uninstalling Arduino CLI...'
    silently- mv -f "`location_of_ --arduino-cli-destination`" "$trash"
 fi
 
+echo 'Uninstalling Arduino Light Show CLI...'
 # Deletes the CLI script as specified by <utility file: file locations>.
 silently- mv -f "`location_of_ --cli-command-destination`/`location_of_ --cli-command`" "$trash"
+
+# Gets the name of the CLI's supporting file directory folder.
+readonly cli_supporing_files_folder=$(basename "$(location_of_ --cli-supporting-files-destination)")
+# Removes any directory in the trash folder of the same name as the CLI's supporting file directory.
+[ -d "$trash/$cli_supporing_files_folder" ] && rm -r "$trash/$cli_supporing_files_folder"
+
 # Deletes the CLI's supporting files folder as specified by <utility file: file locations>.
-silently- mv -f "`location_of_ --cli-supporting-files-destination`" "$trash"
+silently- mv "`location_of_ --cli-supporting-files-destination`" "$trash"
 
-echo 'Uninstalling complete'
-
+echo 'Uninstallation complete.'
 exit 0
