@@ -32,6 +32,27 @@ readonly _location_file="$dot/file_locations"
 #-Functions-------------------------------------#
 
 
+# Runs a given command while removing the output streams specified by a flag. If no flag is passed,
+# stdout and stderr are silenced.
+#
+# Arguments:
+# <flag> optional, possible values: "--stderr", "--stdout"
+# <command> including all of its arguments
+#
+# Return status:
+# $? of <command>
+function silently- {
+   # Runs <command> and redirects output differently depending on the given <flag>.
+   case "$1" in
+      --stdout) "${@:2}" 1> /dev/null ;;
+      --stderr) "${@:2}" 2> /dev/null ;;
+             *) "$@"     &> /dev/null ;;
+   esac
+
+   # Propagates the return status of <command>.
+   return $?
+}
+
 # Prints all of the lines of <file> immediately following the line containing only <string> upto the
 # next empty line. It is expected for there to be exactly one line containing only <string>.
 #
@@ -53,7 +74,7 @@ function lines_after_unique_ {
    fi
 
    # Gets the line number immediately following the line of <string>'s match in <file>.
-   local -r list_start=$(( `cut -d : -f 1 <<< "$match_line"` + 1 ))
+   local -r list_start=$[`cut -d : -f 1 <<< "$match_line"` + 1]
 
    # Prints all of the lines in <file> starting from "$list_start", until an empty line is reached.
    while read -r line; do
@@ -88,7 +109,7 @@ function regex_for_ {
       --uninstall-arduino-cli-flag-tag) regex_identifier='Uninstall Arduino-CLI flag tag:'        ;;
       *)
          echo "Error: \`${FUNCNAME[0]}\` received invalid flag \"$1\"" >&2
-         return 1
+         return 1 ;;
    esac
 
    # Prints the lines following the search string in the regex-file, or returns on failure if that
@@ -133,7 +154,7 @@ function location_of_ {
       --arduino-cli-destination)          location_identifier='Arduino-CLI destination:'         ;;
       *)
          echo "Error: \`${FUNCNAME[0]}\` received invalid flag \"$1\"" >&2
-         return 1
+         return 1 ;;
    esac
 
    # Gets the lines matched in the location-file for the given identifier, or returns on failure if

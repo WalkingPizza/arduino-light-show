@@ -37,8 +37,10 @@ function declare_constants_ {
    # encountered an error is printed and a return on status 1 occurs.
    case "`uname -s`" in
       Darwin*) readonly trash="$HOME/.Trash" ;;
-      Linux*)  readonly trash="/home/$USER/.local/share/Trash" ;;
-      *) echo 'Error: uninstallation is not possible on the current operating system'; return 1
+       Linux*) readonly trash="/home/$USER/.local/share/Trash" ;;
+            *)
+         echo 'Error: uninstallation is not possible on the current operating system'
+         return 1 ;;
    esac
 
    return 0
@@ -59,13 +61,13 @@ echo 'Uninstalling...'
 # Deletes the Arduino CLI as specified by <utility file: file locations>, if the "uninstall Arduino
 # CLI"-flag is set.
 if [ "$uninstall_arduino_cli" = true ]; then
-   mv -f "`location_of_ --arduino-cli-destination`" "$trash" &> /dev/null
+   silently- mv -f "`location_of_ --arduino-cli-destination`" "$trash"
 fi
 
 # Deletes the CLI script as specified by <utility file: file locations>.
-mv -f "`location_of_ --cli-command-destination`/`location_of_ --cli-command`" "$trash" &> /dev/null
+silently- mv -f "`location_of_ --cli-command-destination`/`location_of_ --cli-command`" "$trash"
 # Deletes the CLI's supporting files folder as specified by <utility file: file locations>.
-mv -f "`location_of_ --cli-supporting-files-destination`" "$trash" &> /dev/null
+silently- mv -f "`location_of_ --cli-supporting-files-destination`" "$trash"
 
 echo 'Uninstalling complete'
 

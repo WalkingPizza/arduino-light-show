@@ -25,27 +25,6 @@ readonly _color_normal='\033[0m'
 #-Functions-------------------------------------#
 
 
-# Runs a given command while removing the output streams specified by a flag. If no flag is passed,
-# stdout and stderr are silenced.
-#
-# Arguments:
-# <flag> optional, possible values: "--stderr", "--stdout"
-# <command> including all of its arguments
-#
-# Return status:
-# $? of <command>
-function silent- {
-   # Runs <command> and redirects output differently depending on the given <flag>.
-   case "$1" in
-      --stdout) "${@:2}" 1> /dev/null ;;
-      --stderr) "${@:2}" 2> /dev/null ;;
-      *) "$@" &> /dev/null ;;
-   esac
-
-   # Propagates the return status of <command>.
-   return $?
-}
-
 # Prints a description about whether the test with a given identifier succeeded based on whether the
 # last return status corresponds to an expected value or not.
 #

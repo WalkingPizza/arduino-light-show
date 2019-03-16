@@ -5,9 +5,12 @@
 
 
 # Gets the directory of this script.
-dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
-# Imports testing utilities.
-. "$dot/utilities.sh"
+_dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
+# Imports testing and CLI utilities.
+. "$_dot/utilities.sh"
+. "$_dot/../Utilities/utilities.sh"
+# (Re)sets the dot-variable after imports.
+dot="$_dot"
 
 
 #-Constant-Declarations-------------------------#
@@ -22,8 +25,8 @@ readonly test_configuration="$dot/test_AC_configuration"
 
 
 echo "Testing \``basename "$test_command"`\` in \`${BASH_SOURCE##*/}\`:"
-silent- touch "$test_ino_file"
-silent- touch "$test_configuration"
+silently- touch "$test_ino_file"
+silently- touch "$test_configuration"
 
 
 #-Tests-----------------------------------------#
@@ -31,16 +34,16 @@ silent- touch "$test_configuration"
 
 # Test: Invalid file-paths
 
-silent- "$test_command" invalid_file "$test_ino_file"
+silently- "$test_command" invalid_file "$test_ino_file"
 report_if_last_status_was 1
 
-silent- "$test_command" "$test_configuration" invalid_file
+silently- "$test_command" "$test_configuration" invalid_file
 report_if_last_status_was 1
 
 
 # Test: Non-`.ino` file as second argument
 
-silent- "$test_command" "$test_configuration" "$test_configuration"
+silently- "$test_command" "$test_configuration" "$test_configuration"
 report_if_last_status_was 3
 
 
@@ -48,30 +51,30 @@ report_if_last_status_was 3
 
 echo 'invalid' > "$test_configuration"
 echo $'some valid: 123\nother valid: 001' > "$test_configuration"
-silent- "$test_command" "$test_configuration" "$test_ino_file"
+silently- "$test_command" "$test_configuration" "$test_ino_file"
 report_if_last_status_was 4
 
 echo 'invalid: 123;' > "$test_configuration"
-silent- "$test_command" "$test_configuration" "$test_ino_file"
+silently- "$test_command" "$test_configuration" "$test_ino_file"
 report_if_last_status_was 4
 
 echo 'invalid 456' > "$test_configuration"
-silent- "$test_command" "$test_configuration" "$test_ino_file"
+silently- "$test_command" "$test_configuration" "$test_ino_file"
 report_if_last_status_was 4
 
 echo ':nvalid: 456' > "$test_configuration"
-silent- "$test_command" "$test_configuration" "$test_ino_file"
+silently- "$test_command" "$test_configuration" "$test_ino_file"
 report_if_last_status_was 4
 
 echo 'invalid:9' > "$test_configuration"
-silent- "$test_command" "$test_configuration" "$test_ino_file"
+silently- "$test_command" "$test_configuration" "$test_ino_file"
 report_if_last_status_was 4
 
 
 # Test: Configuration with duplicate microphone-identifier
 
 echo $'duplicate: 1\nother: 2\nduplicate: 3' > "$test_configuration"
-silent- "$test_command" "$test_configuration" "$test_ino_file"
+silently- "$test_command" "$test_configuration" "$test_ino_file"
 report_if_last_status_was 5
 
 
@@ -116,7 +119,7 @@ int something_inbetween;
 int something_after;
 END`
 
-silent- "$test_command" "$test_configuration" "$test_ino_file"
+silently- "$test_command" "$test_configuration" "$test_ino_file"
 report_if_output_matches "`cat "$test_ino_file"`" "$expected_output"
 
 
@@ -151,7 +154,7 @@ int something_inbetween;
 int something_after;
 END`
 
-silent- "$test_command" "$test_configuration" "$test_ino_file"
+silently- "$test_command" "$test_configuration" "$test_ino_file"
 report_if_output_matches "`cat "$test_ino_file"`" "$expected_output"
 
 
@@ -180,14 +183,14 @@ const int threshold_declaration_2_value = 30;
 int something_after;
 END`
 
-silent- "$test_command" "$test_configuration" "$test_ino_file"
+silently- "$test_command" "$test_configuration" "$test_ino_file"
 report_if_output_matches "`cat "$test_ino_file"`" "$expected_output"
 
 
 #-Test-Cleanup------------------------------------#
 
 
-silent- rm "$test_ino_file"
-silent- rm "$test_configuration"
+silently- rm "$test_ino_file"
+silently- rm "$test_configuration"
 
 exit 0

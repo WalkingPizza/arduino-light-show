@@ -14,7 +14,6 @@
 # declarations below.
 
 # TODO: Add a different "supporting files" destination for Linux
-# TODO: Figure out a good silencing strategy
 
 
 #-Constants-------------------------------------#
@@ -23,8 +22,8 @@
 # The function wrapping all constant-declarations for this script.
 function declare_constants {
    # A URL to the Arduino Light Show repository.
-   readonly repository_location='https://github.com/WalkingPizza/arduino-light-show.git'
-   # The name of the folder into which the repository above will be cloned.
+   readonly repository_url='https://github.com/WalkingPizza/arduino-light-show/archive/master.zip'
+   # The name of the folder into which the repository above will be placed.
    readonly repository_folder='arduino-light-show'
    # A hardcoded path to the CLI-utilities, needed for bootstrapping the installation.
    readonly cli_utilities='Command Line Interface/Utilities/utilities.sh'
@@ -45,19 +44,26 @@ function declare_constants {
 #
 # Return status:
 # 0: success
-# 1: Git is not installed
+# 1: download of the repository failed
 # 2: the user does not want to reinstall
 function setup_installation_environment_ {
    # Moves into the installation process' "sandbox".
    cd "$working_directory"
 
-   # Tries to download the current version of the repository into the "$repository_folder" folder.
-   # If that is not possible because Git is not installed, an error is printed and return on
-   # failure occurs.
-   if ! git clone "$repository_location" "$repository_folder" &> /dev/null; then
-      echo "Error: could not clone repository \"$repository_location\"" >&2
+   echo 'Downloading Arduino Light Show CLI:'
+
+   # Tries to download the repository into the "$repository_folder.zip" archive. If that is not
+   # possible an error is printed and a return on failure occurs.
+   if ! curl -Lk --progress-bar -o "$repository_folder.zip" "$repository_location"; then
+      echo "Error: failed to download repository at \"$repository_location\"" >&2
       return 1
    fi
+
+   echo 'Unpacking Arduino Light Show CLI...'
+
+   # Unzips the archive into the "$repository_folder" and removes the archive.
+   silently- unzip "$repository_folder.zip" -d "$repository_folder"
+   rm "$repository_folder.zip"
 
    # Imports CLI-utilities.
    . "$repository_folder/$cli_utilities"
@@ -97,15 +103,19 @@ function install_arduino_cli_ {
    local -r archive='arduino_cli.zip'
    local -r unzipped_folder='arduino_cli'
 
+   echo 'Downloading Arduino CLI:'
+
    # Tries to download the Ardunio-CLI archive into the "$archive" folder. If that doesn't work an
    # error is printed and a return on failure occurs.
-   if ! curl -so $archive "`location_of_ --arduino-cli-source`"; then
+   if ! curl --progress-bar -o $archive "`location_of_ --arduino-cli-source`"; then
       echo 'Error: failed to download Arduino CLI' >&2
       return 1
    fi
 
+   echo 'Installing Arduino CLI...'
+
    # Unzips the archive into the "$unzipped_folder" and removes the archive.
-   unzip $archive -d $unzipped_folder &> /dev/null
+   silently- unzip $archive -d $unzipped_folder
    rm $archive
 
    # Checks if the archive contains exactly one file (expected to be the Arduino-CLI script). If it
@@ -125,11 +135,12 @@ function install_arduino_cli_ {
 
    # Makes sure that the Ardunio-CLI is now properly installed. If not an error is printed and a
    # return on failure occurs.
-   if ! command -v "`basename "$arduino_cli_destination"`" &> /dev/null; then
+   if ! silently- command -v "`basename "$arduino_cli_destination"`"; then
       echo 'Error: Arduino CLI installation failed' >&2
       return 3
    fi
 
+   echo 'Installed Arduino CLI.'
    return 0
 }
 
@@ -155,7 +166,7 @@ function set_uninstall_ardunio_cli_flag_ {
    # Makes sure that a line with the flag-tag was found, or returns on failure.
    [ -n "$flag_tag_line" ] || return 1
    # Gets the line number of the flag itself.
-   local -r flag_line_number=$(( `cut -d : -f 1 <<< "$flag_tag_line"` + 1 ))
+   local -r flag_line_number=$[`cut -d : -f 1 <<< "$flag_tag_line"` + 1]
 
    # Replaces "=false" with "=true" in the uninstaller-script's flag line.
    sed -i '' -e "$flag_line_number s/=false/=true/" "$uninstaller_script"
@@ -172,6 +183,8 @@ function install_lightshow_cli {
    # Gets the repository-internal relative path to the repository's CLI-folder as specified by
    # <utility file: file locations>.
    local -r repository_cli_directory=`location_of_ --repo-cli-directory`
+
+   echo 'Installing Arduino Light Show CLI...'
 
    # Moves all CLI supporting non-utility files as specified by <utility file: file locations> to
    # the CLI's supporting files folder. Moving the utility-files would disrupt the further
@@ -201,6 +214,7 @@ function install_lightshow_cli {
    mv "$repository_folder/$repository_cli_directory/`location_of_ --cli-command`" \
       "`location_of_ --cli-command-destination`"
 
+   echo 'Installed Arduino Light Show CLI.'
    return 0
 }
 
@@ -213,25 +227,15 @@ declare_constants "$@"
 # Makes sure the temporary working directory is always cleared upon exiting.
 trap "rm -rf \"$working_directory\"" EXIT
 
-# Makes sure Git is installed. If not an error is printed and an exit on status 7 occurs.
-if ! command -v git &> /dev/null; then
-   echo 'The Arduino Light Show installer requires Git. Please install it first.'
-   exit 7
-fi
-
 setup_installation_environment_ || exit $?
 
 # Makes sure the Arduino-CLI is installed. If not, it's installed before continuing.
-if ! command -v arduino-cli &> /dev/null; then
-   echo 'Installing Arduino CLI...'
+if ! silently- command -v arduino-cli; then
    install_arduino_cli_ || exit $?
-
    set_uninstall_ardunio_cli_flag_
 fi
 
-# Installs the Arduino Light Show CLI.
-echo 'Installing Arduino Light Show CLI...'
 install_lightshow_cli
-echo 'Installation complete'
 
+echo 'Installation complete.'
 exit 0

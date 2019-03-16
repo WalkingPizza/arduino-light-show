@@ -61,7 +61,7 @@ function declaration_line_numbers {
    while read line; do
       if egrep -q "`regex_for_ --header`" <<< "$line"; then #NF
          echo $line_counter
-         echo $(( line_counter + 1 ))
+         echo $[line_counter + 1]
       elif egrep -q "`regex_for_ --end-tag`" <<< "$line"; then #NF
          return
       fi

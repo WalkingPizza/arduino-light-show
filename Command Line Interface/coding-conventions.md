@@ -15,7 +15,10 @@ Scripts, except for [pseudo-libraries](#pseudolibraries) and tests, are structur
 #### Preliminaries:
 The preliminaries section contains imports of [pseudo-libraries](#pseudolibraries) and the
 declaration of the `dot` variable. The `dot` variable contains the path to the script file in which
-it is declared. This is useful when referring to other paths, based on the location of the script.
+it is declared (the name _dot_ is therefore chosen to resemble the `.` used to refer to the current
+directory). This is useful when referring to other paths, based on the location of the script. If
+`dot` is used after an import it should be reset, as it might have been overwritten during the
+import.
 
 #### Constants:
 Constants are declared in a `declare_constants` function which expects all of the script's command

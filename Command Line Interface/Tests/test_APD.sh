@@ -5,10 +5,12 @@
 
 
 # Gets the directory of this script.
-dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
-# Imports testing utilities.
-. "$dot/utilities.sh"
-
+_dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
+# Imports testing and CLI utilities.
+. "$_dot/utilities.sh"
+. "$_dot/../Utilities/utilities.sh"
+# (Re)sets the dot-variable after imports.
+dot="$_dot"
 
 #-Constant-Declarations-------------------------#
 
@@ -21,7 +23,7 @@ readonly test_device_folder="$dot/test_APD_devices"
 
 
 echo "Testing \``basename "$test_command"`\` in \`${BASH_SOURCE##*/}\`:"
-silent- mkdir "$test_device_folder"
+silently- mkdir "$test_device_folder"
 
 
 #-Tests-----------------------------------------#
@@ -29,7 +31,7 @@ silent- mkdir "$test_device_folder"
 
 # Test: Invalid device-folder path
 
-silent- "$test_command" invalid_directory_path
+silently- "$test_command" invalid_directory_path
 report_if_last_status_was 1
 
 
@@ -56,5 +58,5 @@ report_if_last_status_was 1
 #-Test-Cleanup------------------------------------#
 
 
-silent- rm -r "$test_device_folder"
+silently- rm -r "$test_device_folder"
 exit 0

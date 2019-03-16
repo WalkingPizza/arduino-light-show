@@ -13,18 +13,17 @@
 ---
 ### `installer.sh`:
 * line 16: Add a different "supporting files" destination for Linux
-* line 17: Figure out a good silencing strategy
 ---
 ### `test_APD.sh`:
-* line 38: Implement using TCL's expect
-* line 43: Implement using TCL's expect
-* line 48: Implement using TCL's expect
-* line 53: Implement using TCL's expect
+* line 40: Implement using TCL's expect
+* line 45: Implement using TCL's expect
+* line 50: Implement using TCL's expect
+* line 55: Implement using TCL's expect
 ---
 ### `test_APU.sh`:
-* line 65: Implement using TCL's expect
-* line 72: Implement using TCL's expect
-* line 77: Implement using TCL's expect
+* line 68: Implement using TCL's expect
+* line 75: Implement using TCL's expect
+* line 80: Implement using TCL's expect
 ---
 ### `uninstaller.sh`:
 * line 10: Bug: moving doesn't occur if the trash already contains a file/folder of the same name
