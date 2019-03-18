@@ -22,6 +22,15 @@
 # * 3: The user chose to quit the program.
 
 
+#-Preliminaries---------------------------------#
+
+
+# Gets the directory of this script.
+dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
+# Imports CLI utilities.
+. "$dot/../Utilities/utilities.sh"
+
+
 #-Constants-------------------------------------#
 
 
@@ -37,37 +46,6 @@ function declare_constants {
    # Defines strings appearing as options in the select statement below.
    readonly dont_know_option="I don't know"
    readonly quit_option='Quit'
-}
-
-
-#-Functions-------------------------------------#
-
-
-# This function takes a list of device-paths. It prints out the same list, with any "tty"-prefixed
-# being merged onto a corresponding "cu"-prefixed device (if one exists).
-function merge_tty_onto_cu {
-   # Gets all of the devices whose names start with "tty".
-   local tty_devices=`egrep '^tty' <<< "$1"`
-
-   # Initializes the set of possible devices, with those whose name does not start with "tty".
-   local possible_devices=`egrep -v '^tty' <<< "$1"`
-
-   # Adds only those "tty"-devices to the `possible_devices`, that do not have an equivalent "cu"
-   # device.
-   for tty_device in "$tty_devices"; do
-      # Removes the "tty"-prefix from the device's name.
-      local device_without_prefix=${tty_device:3}
-
-      # If there is no matching "cu"-device, the "tty"-device is added to the set of possible
-      # devices.
-      egrep -q "^cu$device_without_prefix" <<< "$possible_devices"
-      if [ $? -eq 0 ]; then
-         possible_devices="$possible_devices tty$device_without_prefix"
-      fi
-   done
-
-   # Returns the resulting devices via stdout.
-   echo "$possible_devices"
 }
 
 

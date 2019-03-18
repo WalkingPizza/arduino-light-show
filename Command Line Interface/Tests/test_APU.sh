@@ -24,7 +24,7 @@ readonly test_device_folder="$dot/test_APU_devices"
 
 
 echo "Testing \``basename "$test_command"`\` in \`${BASH_SOURCE##*/}\`:"
-silently- mkdir "$test_device_folder"
+mkdir "$test_device_folder"
 
 
 #-Tests-----------------------------------------#
@@ -45,7 +45,7 @@ touch "$test_device_folder/us_b"
 silently- "$test_command" "$test_device_folder"
 report_if_last_status_was 2
 
-silently- rm -r "$test_device_folder/"*
+rm -r "$test_device_folder/"*
 
 
 # Test: One "usb"-device
@@ -56,7 +56,7 @@ touch "$test_device_folder/not_us_b"
 output=`"$test_command" "$test_device_folder"`
 report_if_output_matches "$output" "$test_device_folder/usb1"
 
-silently- rm -r "$test_device_folder/"*
+rm -r "$test_device_folder/"*
 
 
 # Test: Select first of multiple "usb"-devices
@@ -65,23 +65,23 @@ touch "$test_device_folder/usb device with spaces"
 touch "$test_device_folder/not_us_b"
 touch "$test_device_folder/usb1"
 
-# TODO: Implement using TCL's expect
+# TODO: Implement using heredocs
 
-silently- rm -r "$test_device_folder/"*
+rm -r "$test_device_folder/"*
 
 
 # Test: Select "I don't know" option
 
-# TODO: Implement using TCL's expect
+# TODO: Implement using heredocs
 
 
 # Test: Select "Quit" option
 
-# TODO: Implement using TCL's expect
+# TODO: Implement using heredocs
 
 
 #-Test-Cleanup------------------------------------#
 
 
-silently- rm -r "$test_device_folder"
+rm -r "$test_device_folder"
 exit 0

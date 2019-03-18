@@ -25,8 +25,8 @@ readonly test_configuration="$dot/test_AC_configuration"
 
 
 echo "Testing \``basename "$test_command"`\` in \`${BASH_SOURCE##*/}\`:"
-silently- touch "$test_ino_file"
-silently- touch "$test_configuration"
+touch "$test_ino_file"
+touch "$test_configuration"
 
 
 #-Tests-----------------------------------------#
@@ -190,7 +190,7 @@ report_if_output_matches "`cat "$test_ino_file"`" "$expected_output"
 #-Test-Cleanup------------------------------------#
 
 
-silently- rm "$test_ino_file"
-silently- rm "$test_configuration"
+rm "$test_ino_file"
+rm "$test_configuration"
 
 exit 0

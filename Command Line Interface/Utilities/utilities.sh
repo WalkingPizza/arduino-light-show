@@ -12,9 +12,8 @@
 
 
 # Turns on alias-expansion explicitly as users of this script will probably be non-interactive
-# shells, while also clearing all existing aliases.
+# shells.
 shopt -s expand_aliases
-unalias -a
 
 # Gets the directory of this script.
 dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
@@ -32,6 +31,47 @@ readonly _location_file="$dot/file_locations"
 #-Functions-------------------------------------#
 
 
+# Checks the given number of command line arguments is equal to a given expected range of them.
+# If not, prints an error message containing the given correct usage pattern and returns on failure.
+# If the expected number of arguments is not a range, the upper bound can be omitted.
+# If the expected number of command line arguments is `0` a custom message will be printed, so the
+# correct usage pattern string can be omitted.
+#
+# Arguments:
+# <script name> passed automatically by the alias
+# <actual number of command line arguments> passed automatically by the alias
+# <minimum expected number of command line arguments>
+# <maximum expected number of command line arguments> case-optional
+# <correct usage pattern> case-optional
+#
+# Return status:
+# 0: success
+# 1: the number arguments does not match the expected number
+alias assert_correct_argument_count_='_assert_correct_argument_count_ "${BASH_SOURCE##*/}" "$#" '
+function _assert_correct_argument_count_ {
+   # Sets up the <minimum expected number of command line arguments>, <maximum expected number of
+   # command line arguments> and <correct usage pattern>, accoring to whether an upper bound was
+   # given or not.
+   local -r expected_minimum=$3
+   case "$4" in
+      # Handels the cases where "$4" is not a number.
+      ''|*[!0-9]*) local -r expected_maximum=$3; local -r usage_pattern=$4 ;;
+      # Handels the cases where "$4" is not, not a number.
+      *) local -r expected_maximum=$4; local -r usage_pattern=$5 ;;
+   esac
+
+   # Checks whether the  <actual number of command line arguments> is in the range of <minimum
+   # expected number of command line arguments> and <maximum expected number of command line
+   # arguments>. If not an error is printed and return on failure occurs.
+   [ "$2" -ge "$expected_minimum" -a "$2" -le "$expected_maximum" ] && return 0
+
+   # Prints a different error message if the <expected number of command line arguments> is `0`.
+   [ "$3" -eq 0 ] && echo "Usage: \`$1\` expects no arguments" >&2 || echo "Usage: $1 $4" >&2
+   echo "Consult the script's source for further documentation." >&2
+
+   return 1
+}
+
 # Runs a given command while removing the output streams specified by a flag. If no flag is passed,
 # stdout and stderr are silenced.
 #
@@ -44,9 +84,9 @@ readonly _location_file="$dot/file_locations"
 function silently- {
    # Runs <command> and redirects output differently depending on the given <flag>.
    case "$1" in
-      --stdout) "${@:2}" 1> /dev/null ;;
-      --stderr) "${@:2}" 2> /dev/null ;;
-             *) "$@"     &> /dev/null ;;
+      --stdout) shift; "$@" 1>/dev/null ;;
+      --stderr) shift; "$@" 2>/dev/null ;;
+             *)        "$@" &>/dev/null ;;
    esac
 
    # Propagates the return status of <command>.
@@ -77,9 +117,9 @@ function lines_after_unique_ {
    local -r list_start=$[`cut -d : -f 1 <<< "$match_line"` + 1]
 
    # Prints all of the lines in <file> starting from "$list_start", until an empty line is reached.
-   while read -r line; do
+   tail -n "+$list_start" "$2" | while read -r line; do
       [ -n "$line" ] && echo "$line" || break
-   done <<< "`tail -n "+$list_start" "$2"`"
+   done
 
    return 0
 }
@@ -209,22 +249,41 @@ function _assert_path_validity_ {
    return 0
 }
 
-# Prompts the user for input until either [ENTER] or [ESC] is pressed. If [ENTER] is pressed, the
-# function returns successfully, otherwise it returns on failure.
+# Prompts the user for input until either [y] or [n] is pressed. If [y] is pressed, the function
+# returns successfully, otherwise it returns on failure.
 #
 # Return status:
-# 0: the user pressed [ENTER]
-# 1: the user pressed [ESC]
+# 0: the user pressed [y]
+# 1: the user pressed [n]
 function succeed_on_approval_ {
-   # Creates an infinite loop.
-   while :; do
-      # Reads exactly one character.
-      read -s -n 1
+   while true; do
+      # Tries to read exactly one character and tries again right away if that did not work.
+      read -s -n 1 || continue
 
-      # Checks for [ENTER] or [ESC] and returns if either one of them was entered.
+      # Checks for [y] or [n] and returns if either one of them was entered.
       case $REPLY in
-         '') return 0 ;;
-         $'\e') return 1 ;;
+         'y'|'Y') return 0 ;;
+         'n'|'N') return 1 ;;
       esac
    done
+}
+
+# TODO: tty is preferable
+# Prints out a given list of device paths, having merged any "tty"-prefixed device onto a
+# corresponding "cu"-prefixed device (if one exists).
+#
+# Arguments:
+# <list of device paths>
+function merge_tty_onto_cu {
+   # Prints all of the devices whose name does not start with "tty".
+   egrep -v '^tty' <<< "$1"
+
+   # Iterates over all of the devices starting with "tty", adding only those "tty"-devices to the
+   # final devices that do not have an equivalent "cu"-device.
+   egrep '^tty' <<< "$1" | while read -r tty_device; do
+      # Prints the "tty"-device if there is no matching "cu"-device.
+      egrep -q "^\s*${tty_device/tty/cu}\s*\$" <<< "$1" || echo "$tty_device"
+   done
+
+   return 0
 }

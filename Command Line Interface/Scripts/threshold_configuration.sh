@@ -116,10 +116,10 @@ function _numbered_declaration_bodies {
    local last_matched=false
 
    # Iterates over the lines in the file.
-   while read line; do
+   while read -r line; do
       # Prints the current line if the previous one matched (meaning that this line should be a
       # declaration body).
-      if [ "$last_matched" = 'true' ]; then
+      if $last_matched; then
          echo "$line_counter:$line"
          last_matched=false
       else
@@ -170,7 +170,7 @@ function numbered_declaration_components {
 # given file.
 function get_microphone_identifiers_ {
    # Gets the lines containing possibly malformed threshold-declaration headers.
-   local header_candidates=`numbered_declaration_components --headers-candidates "$1"`
+   local header_candidates=`numbered_declaration_components --header-candidates "$1"`
    # Gets the lines containing valid threshold-declaration headers.
    local headers=`numbered_declaration_components --headers "$1"`
 
@@ -188,7 +188,7 @@ function get_microphone_identifiers_ {
    # Prints the result to stdout.
    echo "$microphone_ids"
 
-   return 0 # Exiting convention
+   return 0
 }
 
 # This function takes a line numbered `.ino`-program. It prints a list of the threshold-values
@@ -221,6 +221,9 @@ assert_path_validity_ "$ino_file" --ino || exit $?
 
 # Gets the lists of microphone-identifiers.
 microphone_identifiers=`get_microphone_identifiers_ "$ino_file"` || exit $?
+
+# Early exit if no declarations were found.
+[ -n "$microphone_identifiers" ] || exit 0
 
 # Gets the list of threshold-values in the same order as the microphone-identifiers.
 threshold_values=`get_threshold_values_ "$ino_file"` || exit $?

@@ -12,6 +12,12 @@
 # For the purpose of bootstrapping the installation process, this script expects certain
 # preconditions pertaining to certain files' locations. These can be gathered from the constant
 # declarations below.
+#
+# Return status:
+# 0: success
+# 1: download of the repository failed
+# 2: the user does not want to reinstall
+# 3: the installation of the Arduino-CLI failed
 
 # TODO: Add a different "supporting files" destination for Linux
 
@@ -62,7 +68,7 @@ function setup_installation_environment_ {
    echo 'Unpacking Arduino Light Show CLI...'
 
    # Unzips the archive into the "$repository_folder" and removes the archive.
-   unzip "$repository_folder.zip" &> /dev/null
+   unzip "$repository_folder.zip" &>/dev/null
    rm "$repository_folder.zip"
 
    # Imports CLI-utilities.
@@ -77,11 +83,11 @@ function setup_installation_environment_ {
    if [ -d "$cli_supporing_files_destination" ]; then
       # Prompts the user and asks them for their decision.
       echo 'It seems you have already run this installation.' >&2
-      echo 'Do you want to reinstall? [ENTER or ESC]' >&2
+      echo 'Do you want to reinstall? [y or n]' >&2
       succeed_on_approval_ || return 2
 
       # This is only executed if the user chose to reinstall.
-      # Removes the exiting CLI's supporting files folder.
+      # Removes the existing CLI's supporting files folder.
       rm -r "$cli_supporing_files_destination/"
    fi
 
@@ -189,26 +195,26 @@ function install_lightshow_cli {
    # Moves all CLI supporting non-utility files as specified by <utility file: file locations> to
    # the CLI's supporting files folder. Moving the utility-files would disrupt the further
    # execution of this script.
-   while read script_location; do
+   location_of_ --cli-scripts | while read script_location; do
       # Constructs the destination of the script in a way that maintains the same directory
       # structure as is present in the repository.
       local destination="$cli_supporing_files_destination/$script_location"
       # Creates intermediate directories if needed and moves the script to its destination.
       mkdir -p "`dirname "$destination"`"
       mv "$repository_folder/$repository_cli_directory/$script_location" "$destination"
-   done <<< "`location_of_ --cli-scripts`"
+   done
 
    # Copies all CLI supporting utility files as specified by <utility file: file locations> to the
    # CLI's supporting files folder. Moving the utility-files would disrupt the further execution of
    # this script.
-   while read utility_location; do
+   location_of_ --cli-utilities | while read utility_location; do
       # Constructs the destination of the file in a way that maintains the same directory
       # structure as is present in the repository.
       local destination="$cli_supporing_files_destination/$utility_location"
       # Creates intermediate directories if needed and copies the file to its destination.
       mkdir -p "`dirname "$destination"`"
       cp -R "$repository_folder/$repository_cli_directory/$utility_location" "$destination"
-   done <<< "`location_of_ --cli-utilities`"
+   done
 
    # Moves the CLI-command to its destination as specified by <utility file: file locations>.
    mv "$repository_folder/$repository_cli_directory/`location_of_ --cli-command`" \
@@ -227,11 +233,11 @@ declare_constants "$@"
 # Makes sure the temporary working directory is always cleared upon exiting.
 trap "rm -rf \"$working_directory\"" EXIT
 
-setup_installation_environment_ || exit $?
+setup_installation_environment_ || exit $? #RS+2=2
 
 # Makes sure the Arduino-CLI is installed. If not, it's installed before continuing.
 if ! silently- command -v arduino-cli; then
-   install_arduino_cli_ || exit $?
+   install_arduino_cli_ || exit 3 #RS=3
    set_uninstall_ardunio_cli_flag_
 fi
 

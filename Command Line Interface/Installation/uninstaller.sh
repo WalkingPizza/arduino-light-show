@@ -6,6 +6,12 @@
 # * the Arduino Light Show CLI's supporting files
 # * the Arduino CLI, if it had to be installed by the installer script
 # Any of these files are only moved to the trash-folder, so the process can be undone manually.
+#
+# Return status:
+# 0: success
+# 1: invalid number of command line arguments
+# 2: the current OS does not allow for uninstallation
+# 3: the user does not want to uninstall
 
 
 #-Preliminaries---------------------------------#
@@ -29,7 +35,7 @@ function declare_constants_ {
    # A flag set by the installer script, determining whether the Arduino CLI should be deleted upon
    # uninstallation as well.
    # UNINSTALL-ARDUINO-CLI-FLAG
-   readonly uninstall_arduino_cli=false
+   readonly should_uninstall_arduino_cli=false
 
    # Sets the trash-folder path according to the operating system. If an unknown operating system is
    # encountered an error is printed and a return on status 1 occurs.
@@ -48,16 +54,17 @@ function declare_constants_ {
 #-Main------------------------------------------#
 
 
-declare_constants_ "$@" || exit 1
+assert_correct_argument_count_ 0 || exit 1 #RS=1
+declare_constants_ "$@" || exit $[$?+1] #RS+1=2
 
 # Gets confirmation from the user that uninstallation should be performed. If approval is not given
 # an exit on status 1 occurs.
-echo 'Are you sure you want to uninstall the Arduino Light Show CLI? [ENTER or ESC]'
-succeed_on_approval_ || exit 2
+echo 'Are you sure you want to uninstall the Arduino Light Show CLI? [y or n]'
+succeed_on_approval_ || exit 3 #RS=3
 
 # Deletes the Arduino CLI as specified by <utility file: file locations>, if the "uninstall Arduino
 # CLI"-flag is set.
-if [ "$uninstall_arduino_cli" = true ]; then
+if $should_uninstall_arduino_cli; then
    echo 'Uninstalling Arduino CLI...'
    silently- mv -f "`location_of_ --arduino-cli-destination`" "$trash"
 fi

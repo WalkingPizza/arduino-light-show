@@ -8,8 +8,7 @@
 
 
 # Turns on alias-expansion explicitly as users of this script will probably be non-interactive
-# shells, while also clearing all existing aliases.
-unalias -a
+# shells.
 shopt -s expand_aliases
 
 
@@ -50,25 +49,34 @@ function _report_if_last_status_was {
 # Prints a description about whether a given output string matches a given expected string. The use
 # of this functions implies and expectation that the last return status was 0. If this is not the
 # case this is also reported.
+# The comparison is performed numerically if the "--numeric"-flag is passed.
 #
 # Arguments:
+# <last return status> passed automatically as $? by the alias
 # <test-identifier> passed automatically as the current line number by the alias
+# <flag> optional, possible values: "--numeric"
 # <output string>
 # <expected output string>
-alias report_if_output_matches='_report_if_output_matches "Line $LINENO" '
+alias report_if_output_matches='_report_if_output_matches $? "Line $LINENO" '
 function _report_if_output_matches {
    # Secures the last return status.
-   local -r return_status=$?
+   local -r return_status=$1
+
+   # Determines whether the ouput matches according to whether the "--numeric" <flag> was set.
+   if [ "$3" = --numeric ]; then
+      [ "$4" -eq "$5" ] && local -r output_matches=true || local -r output_matches=false
+   else
+      [ "$3" = "$4" ] && local -r output_matches=true || local -r output_matches=false
+   fi
 
    # Makes sure that the last return status was not failing, or else reports this and returns.
-   [ "$return_status" -eq 0 ] || { _report_if_last_status_was "$1" 0 "$return_status"; return 0; }
+   [ "$return_status" -eq 0 ] || { _report_if_last_status_was "$2" 0 "$return_status"; return 0; }
 
-   # Prints a message depending on whether <output string> and <expected output string> have the
-   # same value.
-   if [ "$2" = "$3" ]; then
-      echo -e "> $_color_green$1\tOK$_color_normal"
+   # Prints a message depending on whether the output matched or not (as determined above).
+   if $output_matches; then
+      echo -e "> $_color_green$2\tOK$_color_normal"
    else
-      echo -e "> $_color_red$1\tNO: Expected different output$_color_normal"
+      echo -e "> $_color_red$2\tNO: Expected different output$_color_normal"
    fi
 
    return 0

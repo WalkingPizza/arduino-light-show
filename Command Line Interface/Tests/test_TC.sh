@@ -24,7 +24,7 @@ readonly test_ino_file="$dot/test_TC_ino_file.ino"
 
 
 echo "Testing \``basename "$test_command"`\` in \`${BASH_SOURCE##*/}\`:"
-silently- touch "$test_ino_file"
+touch "$test_ino_file"
 
 
 #-Tests-----------------------------------------#
@@ -47,7 +47,7 @@ silently- "$test_command" "$non_ino_file"
 report_if_last_status_was 3
 
 # Removes the temporary file.
-silently- rm "$non_ino_file"
+rm "$non_ino_file"
 
 
 # Test: Existing (empty) `.ino`-file
@@ -57,6 +57,22 @@ silently- rm "$non_ino_file"
 silently- "$test_command" "$test_ino_file"
 report_if_last_status_was 0
 
+
+# Test: Potential declaration headers
+
+cat << END > "$test_ino_file"
+// #threshold "A
+// #threshold B"
+// #threshold "Actual"
+const int a = 0;
+// #threshold ":A"
+// #threshold A
+// #threshold "A" ...
+// #threshold " "A" "
+END
+
+errors=`"$test_command" "$test_ino_file" 2>&1 1>/dev/null`
+report_if_output_matches --numeric "`wc -l <<< "$errors"`" 6
 
 # Test: Duplicate microphone identifiers
 
@@ -98,6 +114,19 @@ output=`silently- --stderr "$test_command" "$test_ino_file"`
 report_if_output_matches "$output" $'A: 1\nB C: 2'
 
 
+# Test: `.ino`-file without declarations
+
+cat << END > "$test_ino_file"
+#include <stdio.h>
+int main() {
+   printf("hello world");
+}
+END
+
+output=`silently- --stderr "$test_command" "$test_ino_file"`
+report_if_output_matches "$output" ''
+
+
 # Test: Messy `.ino`-file
 
 cat << END > "$test_ino_file"
@@ -134,5 +163,5 @@ report_if_output_matches "$output" $'#threshold #1: 1\nvalid threshold: 12345678
 #-Test-Cleanup------------------------------------#
 
 
-silently- rm "$test_ino_file"
+rm "$test_ino_file"
 exit 0

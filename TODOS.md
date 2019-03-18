@@ -6,21 +6,24 @@
 * line 121: Remove any uses of "threshold_declaration_[n >= number of declarations]_value"
 * line 4: Add documentation to this file
 ---
+### `arduino_path_diff.sh`:
+* line 75: figure out if this makes sense
+---
 ### `configure_thresholds.sh`:
 * line 37: Get the Arduino's path
 * line 38: Compile and upload the program file to the Arduino
 * line 4: Add documentation to this file
 ---
 ### `installer.sh`:
-* line 16: Add a different "supporting files" destination for Linux
+* line 22: Add a different "supporting files" destination for Linux
 ---
 ### `test_APD.sh`:
-* line 40: Implement using TCL's expect
-* line 45: Implement using TCL's expect
-* line 50: Implement using TCL's expect
-* line 55: Implement using TCL's expect
+* line 3: Factor out the interactive testing methods into functions and constants in the utility file
 ---
 ### `test_APU.sh`:
-* line 68: Implement using TCL's expect
-* line 75: Implement using TCL's expect
-* line 80: Implement using TCL's expect
+* line 68: Implement using heredocs
+* line 75: Implement using heredocs
+* line 80: Implement using heredocs
+---
+### `utilities.sh`:
+* line 271: tty is preferable
