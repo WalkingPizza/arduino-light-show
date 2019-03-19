@@ -79,4 +79,6 @@ underscore in there name. Certain functions in libraries have convenience-aliase
 ## Variable Declarations
 Variables are declared as _readonly_ whenever possible. For global variables this implies the use of
 the `readonly` keyword, for local variables the `-r` flag is set. Variables within functions are
-always declared as _local_.
+always declared as _local_. Assignments of the value of a process substitution of a failable
+function whose return status is not ignored, can not be made _readonly_, as `local` and `readonly`
+do not propagate the return status of the assignment.

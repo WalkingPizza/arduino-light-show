@@ -128,7 +128,7 @@ function lines_after_unique_ {
 # All patterns are taken from the <utility file: regular expressions>.
 #
 # Arguments:
-# * <flag>
+# * <flag>, possible values: *see below*
 #
 # Return status:
 # 0: success
@@ -141,12 +141,20 @@ function regex_for_ {
    # Sets the search string according to the given flag, or prints an error and returns on failure
    # if an unknown flag was passed.
    case "$1" in
-      --header-candidate)               regex_identifier='Threshold declaration header candidate:';;
-      --header)                         regex_identifier='Threshold declaration header:'          ;;
-      --body)                           regex_identifier='Threshold declaration body:'            ;;
-      --end-tag)                        regex_identifier='Threshold declarations end tag:'        ;;
-      --configuration-entry)            regex_identifier='Threshold configuration entry:'         ;;
-      --uninstall-arduino-cli-flag-tag) regex_identifier='Uninstall Arduino-CLI flag tag:'        ;;
+      --header-candidate)
+         regex_identifier='Threshold declaration header candidate:' ;;
+      --header)
+         regex_identifier='Threshold declaration header:' ;;
+      --body)
+         regex_identifier='Threshold declaration body:' ;;
+      --end-tag)
+         regex_identifier='Threshold declarations end tag:' ;;
+      --configuration-entry)
+         regex_identifier='Threshold configuration entry:' ;;
+      --uninstall-arduino-cli-flag-tag)
+         regex_identifier='Uninstall Arduino-CLI flag tag:' ;;
+      --cli-supporting-files-folder-tag)
+         regex_identifier='CLI supporting files folder tag:' ;;
       *)
          echo "Error: \`${FUNCNAME[0]}\` received invalid flag \"$1\"" >&2
          return 1 ;;
@@ -170,7 +178,7 @@ function regex_for_ {
 # All paths are taken from the <utility file: file paths>.
 #
 # Arguments:
-# * <flag>
+# * <flag>, possible values: *see below*
 #
 # Return status:
 # 0: success

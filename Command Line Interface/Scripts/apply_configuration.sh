@@ -14,8 +14,6 @@
 # 3: an entry in <configuration file> is malformed
 # 4: <configuration file> contains duplicate microphone-identifiers
 
-# TODO: Update documentation in this file
-
 
 #-Preliminaries---------------------------------#
 
@@ -79,7 +77,7 @@ function assert_configuration_validity_ {
 #
 # Arguments:
 # * <file>
-function declaration_line_numbers {
+function declaration_line_numbers_in {
    # Starts the counter at `1`.
    local line_counter=1
 
@@ -115,7 +113,7 @@ function threshold_declarations_for_configuration {
    while read -r configuration_entry; do
       # Reads the next entry if the current one was empty.
       [ -z "$configuration_entry" ] && continue
-      
+
       # Extracts the microphone-identifier and threshold-value from the current configuration entry.
       microphone_id=`cut -d : -f 1 <<< "$configuration_entry"`
       threshold_value=`cut -d : -f 2 <<< "$configuration_entry"`
@@ -146,7 +144,7 @@ assert_path_validity_ "$configuration_file" || exit 2 #RS=2
 assert_configuration_validity_ "$configuration_file" || exit $[$?+2] #RS+2=4
 
 # Gets the line numbers of all of the lines containing threshold-declarations.
-readonly declaration_line_numbers=`declaration_line_numbers "$ino_file"`
+readonly declaration_line_numbers=`declaration_line_numbers_in "$ino_file"`
 
 # Removes all of the current threshold-declarations (in reverse order, so removal of one line does
 # not affect the line number of another).

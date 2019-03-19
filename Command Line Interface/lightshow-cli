@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# TODO: Unfinished
+# http://www.linusakesson.net/programming/tty/index.php
+# https://stackoverflow.com/questions/8632586
+# https://learn.sparkfun.com/tutorials/terminal-basics/tips-and-tricks
+
+
+# This script...
+#
+# Arguments:
+# * <sub-command>, possible values:
+#  ** uninstall
+#  ** get-configuration
+#  ** apply-configuration
+#  ** configure-thresholds
+# * <sub-command dependant arguments>, possible values:
+#  ** uninstall: none
+#  ** get-configuration: <.ino file>
+#  ** apply-configuration: <configuration file> <.ino file>
+#  ** configure-thresholds: none
+#
+#
+
+
+#-Preliminaries---------------------------------#
+
+
+# Gets the directory of this script.
+dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
+
+
+#-Constants-------------------------------------#
+
+
+# CLI-SUPPORTING-FILES-FOLDER-FLAG
+readonly cli_supporting_files_folder="$dot"
+readonly subcommand=$1; shift
+
+
+#-Functions-------------------------------------#
+
+
+function explain_usage {
+   # TODO: Implement
+   return 0
+}
+
+
+#-Main------------------------------------------#
+
+case "$subcommand" in
+   uninstall)            "$cli_supporting_files_folder/Installation/uninstaller.sh" "$@" ;;
+   get-configuration)    "$cli_supporting_files_folder/Scripts/threshold_configuration.sh" "$@" ;;
+   apply-configuration)  "$cli_supporting_files_folder/Scripts/apply_configuration.sh" "$@" ;;
+   configure-thresholds) "$cli_supporting_files_folder/Scripts/configure_thresholds.sh" "$@" ;;
+   *)                    explain_usage ;;
+esac

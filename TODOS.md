@@ -3,8 +3,7 @@
    
 ---
 ### `apply_configuration.sh`:
-* line 168: Remove any uses of "threshold_declaration_[n >= number of declarations]_value"
-* line 17: Update documentation in this file
+* line 166: Remove any uses of "threshold_declaration_[n >= number of declarations]_value"
 ---
 ### `arduino_path_diff.sh`:
 * line 75: figure out if this makes sense
@@ -18,8 +17,13 @@
 * line 3: Unfinished
 ---
 ### `installer.sh`:
-* line 22: Add a different "supporting files" destination for Linux
+* line 160: Test this
+* line 23: Add a different "supporting files" destination for Linux
+---
+### `lightshow-cli`:
+* line 3: Unfinished
+* line 45:    Implement
 ---
 ### `utilities.sh`:
-* line 271: tty is preferable
+* line 279: tty is preferable
 * line 6: Factor out the interactive testing methodology into functions and constants in this file

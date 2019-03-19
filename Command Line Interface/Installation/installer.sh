@@ -17,7 +17,8 @@
 # 0: success
 # 1: download of the repository failed
 # 2: the user does not want to reinstall
-# 3: the installation of the Arduino-CLI failed
+# 3: the CLI-script has a malformed or no "CLI supporing files folder"-declaration
+# 4: the installation of the Arduino-CLI failed
 
 # TODO: Add a different "supporting files" destination for Linux
 
@@ -46,12 +47,11 @@ function declare_constants {
 # Sets up a certain environment for the further steps in the installation process.
 # After running this function the current working directory is "$working_directory", which contains
 # a folder "$repository_folder" which contains all of the contents ot the Arduino Light Show
-# repository. Furthermore the folder for the CLI's supporting files exists and is empty.
+# repository.
 #
 # Return status:
 # 0: success
 # 1: download of the repository failed
-# 2: the user does not want to reinstall
 function setup_installation_environment_ {
    # Moves into the installation process' "sandbox".
    cd "$working_directory"
@@ -71,9 +71,16 @@ function setup_installation_environment_ {
    unzip "$repository_folder.zip" &>/dev/null
    rm "$repository_folder.zip"
 
-   # Imports CLI-utilities.
-   . "$repository_folder/$cli_utilities"
+   return 0
+}
 
+# Sets up the folder for the CLI's supporting files, so it exists and is empty. If one already
+# exists, the user is prompted to choose whether to reinstall.
+#
+# Return status:
+# 0: success
+# 1: the user does not want to reinstall
+function setup_cli_supporting_files_folder_ {
    # Gets the path of the folder in which the CLI's supporting files are supposed to be placed.
    local -r cli_supporing_files_destination=`location_of_ --cli-supporting-files-destination`
 
@@ -84,7 +91,7 @@ function setup_installation_environment_ {
       # Prompts the user and asks them for their decision.
       echo 'It seems you have already run this installation.' >&2
       echo 'Do you want to reinstall? [y or n]' >&2
-      succeed_on_approval_ || return 2
+      succeed_on_approval_ || return 1
 
       # This is only executed if the user chose to reinstall.
       # Removes the existing CLI's supporting files folder.
@@ -150,12 +157,65 @@ function install_arduino_cli_ {
    return 0
 }
 
+# TODO: Test this
+# Writes the location of the CLI's supporting files folder into the CLI-script.
+#
+# Return status:
+# 0: success
+# 1: the CLI-script does not contain the required tag
+# 2: the CLI-script contains a malformed CLI supporting files folder declaration
+function complete_cli_script_ {
+   # Gets the path of the CLI-script, relative to the repository as specified by <utility file:
+   # file locations>.
+   local -r repo_path="`location_of_ --repo-cli-directory`/`location_of_ --cli-uninstaller`"
+   # Gets the path to the CLI-script as specified by <utility file: file locations>.
+   local -r cli_script="$repository_folder/$repo_path"
+   # Gets the regular expression used to search for the "CLI supporting files folder"-tag as
+   # specified by <utility file: regular expressions>.
+   local -r tag_pattern=`regex_for_ --cli-supporting-files-folder-tag`
+   # Gets the line in the CLI-script containing the "CLI supporting files folder"-tag.
+   local -r tag_line=$(egrep -n "$tag_pattern" "$cli_script")
+
+   # Makes sure that a line with the folder-tag was found, or prints an error and returns on
+   # failure.
+   if [ -z "$tag_line" ]; then
+      echo "Error: \`$cli_script\` does not contain a folder declaration tag" >&2
+      return 1
+   fi
+
+   # Gets the line number of the folder declaration itself.
+   local -r folder_line_number=$[`cut -d : -f 1 <<< "$tag_line"` + 1]
+
+   # Gets the folder in which the CLI's supporting files are supposed to be installed as specified
+   # by <utility file: file locations>.
+   local -r cli_supporing_files_destination=`location_of_ --cli-supporting-files-destination`
+
+   # Constructs a string containing the line, with everything after the equals-sign replaced by the
+   # relevant path.
+
+   local -r folder_declaration_line=`sed -n '52p' "$cli_script"`
+   local -r folder_declaration_prefix=`egrep -o '.*=' <<< "$folder_declaration_line"`
+
+   # Makes sure the folder declaration was wellformed, or prints an error and returns on failure.
+   if [ -z "$folder_declaration_prefix" ]; then
+      echo "Error: \`$cli_script\` contains a malformed folder declaration" >&2
+      return 2
+   fi
+
+   local -r completed_declaration="$folder_declaration_prefix'$cli_supporing_files_destination'"
+
+   # Replaces the previous folder declaration in the CLI-script with the completed one.
+   ex -s -c "${folder_declaration_line}i|$completed_declaration" -c 'x' "$cli_script"
+
+   return 0
+}
+
 # Sets a flag in the uninstaller-script, indicating the Arduino-CLI should also be removed when
 # uninstalling the Arduino Light Show CLI.
 #
 # Return status:
 # 0: success
-# 1: the uninstaller does not contain the required flag
+# 1: the uninstaller does not contain the required tag
 function set_uninstall_ardunio_cli_flag_ {
    # Gets the path of the uninstaller-script, relative to the repository as specified by
    # <utility file: file locations>.
@@ -165,14 +225,17 @@ function set_uninstall_ardunio_cli_flag_ {
    # Gets the regular expression used to search for the "uninstall Arduino CLI flag"-tag as
    # specified by <utility file: regular expressions>.
    local -r tag_pattern=`regex_for_ --uninstall-arduino-cli-flag-tag`
-   # Gets the line in the uninstaller-script containing the "uninstall Arduino CLI flag"-tag as
-   # specified by <utility file: regular expressions>.
-   local -r flag_tag_line=$(egrep -n "$tag_pattern" "$uninstaller_script")
+   # Gets the line in the uninstaller-script containing the "uninstall Arduino CLI flag"-tag.
+   local -r tag_line=$(egrep -n "$tag_pattern" "$uninstaller_script")
 
-   # Makes sure that a line with the flag-tag was found, or returns on failure.
-   [ -n "$flag_tag_line" ] || return 1
+   # Makes sure that a line with the flag-tag was found, or prints a warning and returns on failure.
+   if [ -z "$tag_line" ]; then
+      echo "Warning: \`$uninstaller_script\` does not contain a flag tag" >&2
+      return 1
+   fi
+
    # Gets the line number of the flag itself.
-   local -r flag_line_number=$[`cut -d : -f 1 <<< "$flag_tag_line"` + 1]
+   local -r flag_line_number=$[`cut -d : -f 1 <<< "$tag_line"` + 1]
 
    # Replaces "=false" with "=true" in the uninstaller-script's flag line.
    sed -i '' -e "$flag_line_number s/=false/=true/" "$uninstaller_script"
@@ -183,8 +246,8 @@ function set_uninstall_ardunio_cli_flag_ {
 # Installs the Ardunio Light Show CLI by copying the CLI script as well as the CLI's supporting
 # files to their destinations as specified by <utility file: file locations>.
 function install_lightshow_cli {
-   # Gets the folder in which the CLI is supposed to be installed as specified by <utility file:
-   # file locations>.
+   # Gets the folder in which the CLI's supporting files are supposed to be installed as specified
+   # by <utility file: file locations>.
    local -r cli_supporing_files_destination=`location_of_ --cli-supporting-files-destination`
    # Gets the repository-internal relative path to the repository's CLI-folder as specified by
    # <utility file: file locations>.
@@ -233,11 +296,17 @@ declare_constants "$@"
 # Makes sure the temporary working directory is always cleared upon exiting.
 trap "rm -rf \"$working_directory\"" EXIT
 
-setup_installation_environment_ || exit $? #RS+2=2
+# Sets up the installation environment including gaining access to the CLI's utility functions.
+setup_installation_environment_ || exit 1 #RS=1
+. "$repository_folder/$cli_utilities"
+
+# Sets up the CLI's supporting files folder and writes the path into the CLI-script.
+setup_cli_supporting_files_folder_ || exit 2 #RS=2
+complete_cli_script_ || exit 3 #RS=3
 
 # Makes sure the Arduino-CLI is installed. If not, it's installed before continuing.
 if ! silently- command -v arduino-cli; then
-   install_arduino_cli_ || exit 3 #RS=3
+   install_arduino_cli_ || exit 4 #RS=4
    set_uninstall_ardunio_cli_flag_
 fi
 
