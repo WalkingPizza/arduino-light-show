@@ -13,49 +13,57 @@ _dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 dot="$_dot"
 
 
-#-Constant-Declarations-------------------------#
+#-Constants-------------------------------------#
 
 
 readonly test_command="$dot/../Scripts/threshold_configuration.sh"
 readonly test_ino_file="$dot/test_TC_ino_file.ino"
 
 
-#-Test-Setup------------------------------------#
+#-Setup-----------------------------------------#
 
 
 echo "Testing \``basename "$test_command"`\` in \`${BASH_SOURCE##*/}\`:"
 touch "$test_ino_file"
 
 
-#-Tests-----------------------------------------#
+#-Cleanup---------------------------------------#
 
 
-# Test: Non-existing file
+trap cleanup EXIT
+function cleanup {
+   rm "$test_ino_file"
+}
 
-silently- "$test_command" invalid_file_path
+
+#-Tests-Begin-----------------------------------#
+
+
+# Test: Usage
+
+silently- "$test_command"
+report_if_last_status_was 1
+
+silently- "$test_command" 1 2
 report_if_last_status_was 1
 
 
-# Test: Non-`.ino` file
+# Test: Invalid file as argument
 
-# Creates a temporary file not ending in ".ino".
-temporary_file=`mktemp`
-non_ino_file="${temporary_file}_"
-mv "$temporary_file" "$non_ino_file"
+silently- "$test_command" invalid_file_path
+report_if_last_status_was 2
 
-silently- "$test_command" "$non_ino_file"
-report_if_last_status_was 3
-
-# Removes the temporary file.
-rm "$non_ino_file"
+# The test command itself is used as an instance of a file not ending in ".ino".
+silently- "$test_command" "$test_command"
+report_if_last_status_was 2
 
 
-# Test: Existing (empty) `.ino`-file
+# Test: Empty `.ino`-file
 
 > "$test_ino_file"
 
-silently- "$test_command" "$test_ino_file"
-report_if_last_status_was 0
+output=`silently- --stderr "$test_command" "$test_ino_file"`
+report_if_output_matches "$output" ''
 
 
 # Test: Potential declaration headers
@@ -71,8 +79,9 @@ const int a = 0;
 // #threshold " "A" "
 END
 
-errors=`"$test_command" "$test_ino_file" 2>&1 1>/dev/null`
+errors=`silently- --stdout "$test_command" "$test_ino_file" 2>&1`
 report_if_output_matches --numeric "`wc -l <<< "$errors"`" 6
+
 
 # Test: Duplicate microphone identifiers
 
@@ -83,7 +92,7 @@ cat << END > "$test_ino_file"
 END
 
 silently- "$test_command" "$test_ino_file"
-report_if_last_status_was 4
+report_if_last_status_was 3
 
 
 # Test: Malformed declaration body
@@ -97,7 +106,7 @@ int b = 2;
 END
 
 silently- "$test_command" "$test_ino_file"
-report_if_last_status_was 5
+report_if_last_status_was 4
 
 
 # Test: Perfect `.ino`-file
@@ -160,8 +169,7 @@ output=`silently- --stderr "$test_command" "$test_ino_file"`
 report_if_output_matches "$output" $'#threshold #1: 1\nvalid threshold: 123456789\nb: 123'
 
 
-#-Test-Cleanup------------------------------------#
+#-Tests-End-------------------------------------#
 
 
-rm "$test_ino_file"
 exit 0

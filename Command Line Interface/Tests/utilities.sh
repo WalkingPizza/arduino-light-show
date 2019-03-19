@@ -3,6 +3,8 @@
 # This script serves as a library of functions to be used by the CLI's test-scripts. It can be
 # "imported" via sourcing. It should be noted that this script activates alias expansion.
 
+# TODO: Factor out the interactive testing methodology into functions and constants in this file
+
 
 #-Preliminaries---------------------------------#
 
@@ -28,9 +30,9 @@ readonly _color_normal='\033[0m'
 # last return status corresponds to an expected value or not.
 #
 # Arguments:
-# <test-identifier> passed automatically as the current line number by the alias
-# <expected return status>
-# <last return status> optional, is set as $? if not passed explicitly
+# * <test-identifier> passed automatically as the current line number by the alias
+# * <expected return status>
+# * <last return status> optional, is set as $? if not passed explicitly
 alias report_if_last_status_was='_report_if_last_status_was "Line $LINENO" '
 function _report_if_last_status_was {
    # Secures the last return status, unless it was explicitly passed as argument.
@@ -52,11 +54,11 @@ function _report_if_last_status_was {
 # The comparison is performed numerically if the "--numeric"-flag is passed.
 #
 # Arguments:
-# <last return status> passed automatically as $? by the alias
-# <test-identifier> passed automatically as the current line number by the alias
-# <flag> optional, possible values: "--numeric"
-# <output string>
-# <expected output string>
+# * <last return status> passed automatically as $? by the alias
+# * <test-identifier> passed automatically as the current line number by the alias
+# * <flag> optional, possible values: "--numeric"
+# * <output string>
+# * <expected output string>
 alias report_if_output_matches='_report_if_output_matches $? "Line $LINENO" '
 function _report_if_output_matches {
    # Secures the last return status.

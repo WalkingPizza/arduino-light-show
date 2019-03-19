@@ -6,7 +6,7 @@
 # printed to stdout.
 #
 # Arguments:
-# <device folder path> optional
+# * <device folder path> optional, defaults to /dev
 #
 # Return status:
 # 0: success
@@ -36,7 +36,7 @@ function declare_constants {
 }
 
 
-#-Main-Program----------------------------------#
+#-Main------------------------------------------#
 
 
 assert_correct_argument_count_ 0 1 '<device folder path> optional' || exit 1 #RS=1
@@ -54,17 +54,17 @@ echo "Unplug the Arduino then confirm [y], or quit [n]" >&2
 succeed_on_approval_ || exit 3 #RS=3
 
 # Gets the list of devices without the Arduino.
-devices_before=`ls -1 "$device_folder"`
+readonly devices_before=`ls -1 "$device_folder"`
 
 # Makes sure the devices is plugged in.
 echo "Plug in the Arduino then confirm [y], or quit [n]" >&2
 succeed_on_approval_ || exit 3 #RS=3
 
 # Gets the list of devices with the Arduino plugged in.
-devices_after=`ls -1 "$device_folder"`
+readonly devices_after=`ls -1 "$device_folder"`
 
 # Gets the list of devices added by plugging in the Arduino.
-added_devices=`comm -23 <(sort <<< "$devices_after") <(sort <<< "$devices_before")`
+readonly added_devices=`comm -23 <(sort <<< "$devices_after") <(sort <<< "$devices_before")`
 
 # If no new devices could be found an error is printed and a return on failure occurs.
 if [ -z "$added_devices" ]; then
@@ -74,7 +74,7 @@ fi
 
 # TODO: figure out if this makes sense
 # Merges "tty"-prefixed devices onto equivalent "cu"-prefixed devices.
-consolidated_new_devices=`merge_tty_onto_cu "$added_devices"`
+readonly consolidated_new_devices=`merge_tty_onto_cu "$added_devices"`
 
 # If multiple new devices were found an error is printed and a return on failure occurs.
 if [ `wc -l <<< "$consolidated_new_devices"` -gt 1 ]; then

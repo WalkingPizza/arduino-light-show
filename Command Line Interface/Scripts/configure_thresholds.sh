@@ -1,7 +1,6 @@
 #!/bin/bash
 
-
-# TODO: Add documentation to this file
+# TODO: Unfinished
 
 
 #-Constants-------------------------------------#
@@ -21,7 +20,7 @@ function declare_constants {
 #-Functions-------------------------------------#
 
 
-#-Main-Program----------------------------------#
+#-Main------------------------------------------#
 
 
 declare_constants "$@"

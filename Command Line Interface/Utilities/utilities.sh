@@ -38,11 +38,11 @@ readonly _location_file="$dot/file_locations"
 # correct usage pattern string can be omitted.
 #
 # Arguments:
-# <script name> passed automatically by the alias
-# <actual number of command line arguments> passed automatically by the alias
-# <minimum expected number of command line arguments>
-# <maximum expected number of command line arguments> case-optional
-# <correct usage pattern> case-optional
+# * <script name> passed automatically by the alias
+# * <actual number of command line arguments> passed automatically by the alias
+# * <minimum expected number of command line arguments>
+# * <maximum expected number of command line arguments> case-optional
+# * <correct usage pattern> case-optional
 #
 # Return status:
 # 0: success
@@ -76,8 +76,8 @@ function _assert_correct_argument_count_ {
 # stdout and stderr are silenced.
 #
 # Arguments:
-# <flag> optional, possible values: "--stderr", "--stdout"
-# <command> including all of its arguments
+# * <flag> optional, possible values: "--stderr", "--stdout"
+# * <command> including all of its arguments
 #
 # Return status:
 # $? of <command>

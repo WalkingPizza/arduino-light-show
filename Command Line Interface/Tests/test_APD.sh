@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# TODO: Factor out the interactive testing methods into functions and constants in the utility file
-
 
 #-Preliminaries---------------------------------#
 
@@ -15,7 +13,7 @@ _dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 dot="$_dot"
 
 
-#-Constant-Declarations-------------------------#
+#-Constant--------------------------------------#
 
 
 readonly test_command="$dot/../Scripts/arduino_path_diff.sh"
@@ -25,10 +23,8 @@ readonly test_stdout="$dot/test_APD_stdout"
 declare -i test_pid
 
 
-#-Test-Setup------------------------------------#
+#-Setup-----------------------------------------#
 
-# Makes sure a running background process is killed upon exit.
-trap 'silently- ps -p $test_pid && kill -TERM $test_pid' EXIT
 
 echo "Testing \``basename "$test_command"`\` in \`${BASH_SOURCE##*/}\`:"
 mkdir "$test_device_folder"
@@ -36,7 +32,19 @@ mkfifo "$test_stdin"
 touch "$test_stdout"
 
 
-#-Tests-----------------------------------------#
+#-Cleanup---------------------------------------#
+
+
+trap cleanup EXIT
+function cleanup {
+   silently- ps -p $test_pid && kill -TERM $test_pid
+   rm -r "$test_device_folder"
+   rm "$test_stdin"
+   rm "$test_stdout"
+}
+
+
+#-Tests-Begin-----------------------------------#
 
 
 # Test: Usage
@@ -128,10 +136,7 @@ report_if_output_matches "`cat "$test_stdout"`" "$test_device_folder/cu.added_fi
 rm -r "$test_device_folder/"*
 
 
-#-Test-Cleanup------------------------------------#
+#-Tests-End-------------------------------------#
 
 
-rm -r "$test_device_folder"
-rm "$test_stdin"
-rm "$test_stdout"
 exit 0

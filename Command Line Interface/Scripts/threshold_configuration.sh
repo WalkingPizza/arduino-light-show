@@ -1,28 +1,22 @@
 #!/bin/bash
 
-# This script takes a `.ino`-file as command line argument and prints a threshold-configuration
-# corresponding to the `.ino`-file's threshold-declarations.
+# This script prints the configuration corresponding to the threshold-declarations in a given
+# `.ino`-file.
 #
-# A "threshold-declaration" has the form:
+# A "threshold-declaration" has consists of a header and a body, as specified by <utility file:
+# regular expressions>.
+# The printed configuration consists of a sequence of configuration entries, as specified by
+# <utility file: regular expressions>, where now two entries have the same microphone-identifier.
 #
-# // #threshold <microphone-identifier>
-# const int <identifier> = <integer-literal>;
+# Arguments:
+# * <.ino file>
 #
-# The first line is called the "header", the second one the "body".
-# The `<microphone-identifier>` is some (user-defined) string literal, that may not contain colon or
-# double-qoute characters.
-#
-# The generated threshold-configuration file contains a sequence of lines of the form:
-#
-# <microphone_identifier>: <integer-literal>
-#
-# Exit status:
-# * 0: A threshold-configuration file could successfully be generated.
-# * 1: The given program-file path is invalid or not readable
-# * 3: The given program-file path is not a `.ino`-file
-# * 4: Duplicate microphone-identifiers were detected in the `.ino`-file
-# * 5: Malformed threshold-declaration bodies were detected in the `.ino`-file
-# * 6: Program-internal error
+# Return status:
+# 0: success
+# 1: invalid number of command line arguments
+# 2: <.ino file> is not readable or has the wrong file type
+# 3: <.ino file> contains duplicate microphone identifiers
+# 4: <.ino file> contains malformed threshold-declaration bodies
 
 
 #-Preliminaries---------------------------------#
@@ -39,10 +33,7 @@ dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
 # The function wrapping all constant-declarations for this script.
 function declare_constants {
-   # The name of this script.
-   readonly script_name=${BASH_SOURCE##*/}
-
-   # Named command line arguments.
+   # Binds command line arguments.
    readonly ino_file=$1
 }
 
@@ -50,194 +41,238 @@ function declare_constants {
 #-Functions-------------------------------------#
 
 
-# This functions takes line numbered lists of header candidates and valid headers. For every
-# malformed header it prints a warning to stderr.
-function warn_about_malformed_headers {
-   # Gets the diff between the lists of header candidates and valid headers (which `comm` expects to
-   # be lexically sorted).
-   local malformed_headers=`comm -23 <(sort <<< "$1") <(sort <<< "$2")`
+# Prints a line numbered list of threshold-declaration components corresponding to a given flag
+# within a given file. If the file contains a "threshold declarations end"-tag, as specified by
+# <utility file: regular expressions>, the search is only performed upto the line of the tag.
+#
+# Arguments:
+# * <component flag>, possible values: "--header-candidate", "--header", "--body"
+# * <file>
+#
+# Return status:
+# 0: success
+# 1: the given <flag> is invalid
+function line_numbered_declaration_component_ {
+   # Sets the regex pattern associated with a given flag and a flag indicating whether <flag> was
+   # "--body", or prints an error and returns on failure if the given flag was invalid.
+   case "$1" in
+      --header-candidate|--header)
+         local -r component_pattern=`regex_for_ "$1"`
+         local -r flag_was_for_body=false
+         ;;
+      --body)
+         # A declaration body is identifier by searching for a header, so the pattern is set as
+         # such.
+         local -r component_pattern=`regex_for_ --header`
+         local -r flag_was_for_body=true
+         ;;
+      *)
+         echo "Error: \`${FUNCNAME[0]}\` received invalid flag \"$1\"" >&2
+         return 1 ;;
+   esac
 
-   # Returns early if no malformed headers were found.
-   [ -z "$malformed_headers" ] && return
-
-   # Prints a warning message for each malformed line.
-   while read malformed_line; do
-      local line_number=`cut -d : -f 1 <<< "$malformed_line"`
-      echo "Warning: \`$ino_file\` line $line_number: malformed threshold-declaration header" >&2
-   done <<< "$malformed_headers"
-}
-
-# This functions takes a list of line-numbered microphone-identifiers. For every duplicate
-# identifier it prints an error to stderr and aborts.
-function abort_on_duplicate_identifiers_ {
-   # Gets a list of duplicate identifiers.
-   local duplicate_identifiers=`cut -d : -f 2 <<< "$1" | sort | uniq -d`
-
-   # Returns successfully if no duplicates were found.
-   [ -z "$duplicate_identifiers" ] && return 0  # Exiting convention
-
-   # Prints and error message for each duplicate.
-   while read duplicate; do
-      # Gets the lines of the duplicates in a comma-seperated list.
-      local duplicate_lines=`egrep "^\s*[0-9]\s*:\s*$duplicate\s*\$" <<< "$1"`
-      local line_number_list=`cut -d : -f 1 <<< "$duplicate_lines" | paste -s -d , -`
-
-      # Prints the error message to stderr.
-      echo "Error: \`$ino_file\` lines $line_number_list: duplicate microphone-identifiers" >&2
-   done <<< "$duplicate_identifiers"
-
-   exit 4
-}
-
-# This functions takes a list of line-numbered body candidates. For every malformed body it prints
-# an error to stderr and aborts.
-function abort_on_malformed_bodies_ {
-   # Gets the lines containing malformed threshold-declaration bodies.
-   local body_pattern=`regex_for_ --body`
-   local malformed_bodies=`egrep -v "^\s*[0-9]+\s*:${body_pattern:1}" <<< "$1"`
-
-   # Returns successfully if there are no malformed bodies.
-   [ -z "$malformed_bodies" ] && return 0 # Exiting convention
-
-   # Prints an error message for each malformed line.
-   while read malformed_body; do
-      local line_number=`cut -d : -f 1 <<< "$malformed_body"`
-      echo "Error: \`$ino_file\` line $line_number: malformed threshold-declaration body" >&2
-   done <<< "$malformed_bodies"
-
-   exit 5
-}
-
-# A helper function to `numbered_declaration_components` which gets the line numbered threshold
-# declaration bodies for a given file.
-function _numbered_declaration_bodies {
-   # Sets up state variables.
+   # Sets a flag needed in the loop below in the case that <flag> was "--body".
+   local previous_line_matched=false
+   # Starts counting lines with a value of `1`.
    local line_counter=1
-   local last_matched=false
+   # Saves the regex for the "threshold declarations end"-tag, as it will be reference repeatedly.
+   local -r end_tag_regex=`regex_for_ --end-tag`
 
-   # Iterates over the lines in the file.
+   # Iterates over the line in <file>.
    while read -r line; do
-      # Prints the current line if the previous one matched (meaning that this line should be a
-      # declaration body).
-      if $last_matched; then
+      # Checks for the end tag first unconditionally, and breaks if it was read.
+      egrep -q "$end_tag_regex" <<< "$line" && break
+
+      # This can only trigger in the case where <flag> was "--body".
+      # Prints the current line if the previous one matched, and unsets the associated flag.
+      if $flag_was_for_body && $previous_line_matched; then
          echo "$line_counter:$line"
-         last_matched=false
-      else
-         # Checks for threshold-declaration headers, or the end tag.
-         if egrep -q "`regex_for_ --header`" <<< "$line"; then
-            last_matched=true
-         elif egrep -q "`regex_for_ --end-tag`" <<< "$line"; then
-            return
-         fi
+         previous_line_matched=false
+
+      # This can only trigger if <flag> was not "--body" or the previous line did not match.
+      # Checks for lines matching the pattern established above.
+      elif egrep -q "$component_pattern" <<< "$line"; then
+         # Prints the line or sets the "previous line matched"-flag, depending on whether the
+         # <flag> was "--body".
+         $flag_was_for_body && previous_line_matched=true || echo "$line_counter:$line"
       fi
 
-      (( line_counter++ ))
-   done < "$1"
-}
-
-# This function takes a flag and a program file. It returns all of the lines (with line numbers) in
-# the given program file, that match the chosen threshold-declaration component. The search stops
-# when matching a thresholds-end tag.
-# Possible flags are: "--header-candidates", "--headers" or "--bodies"
-function numbered_declaration_components {
-   # Sets the appropriate regex-pattern
-   if [ "$1" = '--header-candidates' ]; then
-      local pattern=`regex_for_ --header-candidate`
-   elif [ "$1" = '--headers' ]; then
-      local pattern=`regex_for_ --header`
-   elif [ "$1" = '--bodies' ]; then
-      echo "`_numbered_declaration_bodies "$2"`"
-      return
-   else
-      return
-   fi
-
-   # Iterates over the lines in the file.
-   line_counter=1
-   while read line; do
-      # Checks for matching lines, or the end tag.
-      if egrep -q "$pattern" <<< "$line"; then
-         echo "$line_counter:$line"
-      elif egrep -q "`regex_for_ --end-tag`" <<< "$line"; then
-         return
-      fi
-
+      # Increments the line counter unconditionally.
       (( line_counter++ ))
    done < "$2"
-}
-
-# This function takes a `.ino`-file. It prints a list of the microphone-identifiers contained in the
-# given file.
-function get_microphone_identifiers_ {
-   # Gets the lines containing possibly malformed threshold-declaration headers.
-   local header_candidates=`numbered_declaration_components --header-candidates "$1"`
-   # Gets the lines containing valid threshold-declaration headers.
-   local headers=`numbered_declaration_components --headers "$1"`
-
-   warn_about_malformed_headers "$header_candidates" "$headers"
-
-   # Gets the lines in which the declaration headers are located.
-   local header_lines=`cut -d : -f 1 <<< "$headers"`
-   # Gets the valid threshold-declaration headers' microphone-identifiers.
-   local microphone_ids=`cut -d '"' -f 2 <<< "$headers"`
-   # Creates a line numbered list of microphone-identifiers.
-   local line_numbered_microphone_ids=`paste -d : <(echo "$header_lines") <(echo "$microphone_ids")`
-
-   abort_on_duplicate_identifiers_ "$line_numbered_microphone_ids" || exit $?
-
-   # Prints the result to stdout.
-   echo "$microphone_ids"
 
    return 0
 }
 
-# This function takes a line numbered `.ino`-program. It prints a list of the threshold-values
-# contained in the given program.
-function get_threshold_values_ {
-   # Gets the lines right after the declaration headers, containing (possibly malformed) threshold-
-   # declaration bodies.
-   local declaration_bodies=`numbered_declaration_components --bodies "$1"`
+# Prints a warning for each malformed declaration header, given lists of header candidates and
+# valid headers.
+#
+# Arguments:
+# * <list of line numbered declaration header candidates>
+# * <list of line numbered declaration headers>
+function warn_about_malformed_headers {
+   # Gets the diff between the lists of header candidates and valid headers (which `comm` expects to
+   # be lexically sorted).
+   local -r malformed_headers=`comm -23 <(sort <<< "$1") <(sort <<< "$2")`
 
-   abort_on_malformed_bodies_ "$declaration_bodies" || exit $?
+   # Returns early if no malformed headers were found.
+   [ -z "$malformed_headers" ] && return 0
 
-   # Gets the valid threshold-declaration bodys' values.
-   local declaration_body_suffixes=`cut -d '=' -f 2 <<< "$declaration_bodies"`
-   local declaration_body_values=`egrep -o '[0-9]+' <<< "$declaration_body_suffixes"`
+   # Prints a warning message for each malformed line.
+   while read -r malformed_line; do
+      # Gets the line number of the malformed line.
+      local line_number=`cut -d : -f 1 <<< "$malformed_line"`
 
-   # Prints the result to stdout.
-   echo "$declaration_body_values"
+      echo "Warning: \`$ino_file\` line $line_number: malformed threshold-declaration header" >&2
+   done <<< "$malformed_headers"
 
-   return 0 # Exiting convention
+   return 0
 }
 
 
-#-Main-Program----------------------------------#
+# Prints an error message and returns on failure for every duplicate microphone-identifier in a
+# given list.
+#
+# Arguments:
+# * <list of line numbered microphone-identifiers>
+#
+# Return status:
+# 0: success
+# 1: <list of line numbered microphone-identifiers> contains duplicates
+function assert_microphone_identifier_uniqueness_ {
+   # Gets a list of duplicate identifiers.
+   local -r duplicate_identifiers=`cut -d : -f 2 <<< "$1" | sort | uniq -d`
+
+   # Returns successfully if no duplicates were found.
+   [ -z "$duplicate_identifiers" ] && return 0
+
+   # Prints and error message for each duplicate.
+   while read duplicate; do
+      # Gets the lines of the duplicates in a comma-seperated list.
+      local -r duplicate_lines=`egrep "^\s*[0-9]\s*:\s*$duplicate\s*\$" <<< "$1"`
+      local -r line_number_list=`cut -d : -f 1 <<< "$duplicate_lines" | paste -s -d , -`
+
+      echo "Error: \`$ino_file\` lines $line_number_list: duplicate microphone-identifiers" >&2
+   done <<< "$duplicate_identifiers"
+
+   return 1
+}
+
+# Prints an error message and returns on failure for every malformed declaration-body in a given
+# list.
+#
+# Arguments:
+# * <list of line numbered declaration bodies>
+#
+# Return status:
+# 0: success
+# 1: <list of line numbered declaration bodies> contains a malformed body
+function assert_declaration_body_validity_ {
+   # Gets the lines containing malformed threshold-declaration bodies.
+   local -r line_numbered_body_pattern="^\s*[0-9]+\s*:`regex_for_ --body | sed -e 's/^\^//'`"
+   local -r malformed_bodies=`egrep -v "$line_numbered_body_pattern" <<< "$1"`
+
+   # Returns successfully if there are no malformed bodies.
+   [ -z "$malformed_bodies" ] && return 0
+
+   # Prints an error message for each malformed body.
+   while read -r malformed_body; do
+      # Gets the line number of the malformed body.
+      local -r line_number=`cut -d : -f 1 <<< "$malformed_body"`
+
+      echo "Error: \`$ino_file\` line $line_number: malformed threshold-declaration body" >&2
+   done <<< "$malformed_bodies"
+
+   return 1
+}
+
+# Prints the list of microphone-identifiers contained in the threshold-declaration headers of a
+# given file. Warnings are printed to stderr for any lines containing header-candidates that are not
+# valid headers, as specified by <utility file: regular expressions>.
+#
+# Arguments:
+# * <file>
+#
+# Return status:
+# 0: success
+# 1: <file> contains duplicate microphone-identifiers
+function microphone_identifiers_in_ {
+   # Gets a line numbered list of the possibly malformed threshold-declaration headers in <file>.
+   local -r line_numbered_header_candidates=`
+      line_numbered_declaration_component_ --header-candidate "$1"
+   `
+   # Gets a line numbered list of the valid threshold-declaration headers in <file>.
+   local -r line_numbered_headers=`line_numbered_declaration_component_ --header "$1"`
+
+   warn_about_malformed_headers "$line_numbered_header_candidates" "$line_numbered_headers"
+
+   # Gets the lines in which the valid declaration headers are located.
+   local -r header_line_numbers=`cut -d : -f 1 <<< "$line_numbered_headers"`
+   # Gets the valid threshold-declaration headers' microphone-identifiers.
+   local -r microphone_identifiers=`cut -d '"' -f 2 <<< "$line_numbered_headers"`
+   # Creates a line numbered list of microphone-identifiers.
+   local -r line_numbered_microphone_identifiers=`
+      paste -d : <(echo "$header_line_numbers") <(echo "$microphone_identifiers")
+   `
+
+   # Makes sure there are no two same microphone identifiers, or returns on failure.
+   assert_microphone_identifier_uniqueness_ "$line_numbered_microphone_identifiers" || return 1
+
+   echo "$microphone_identifiers"
+   return 0
+}
+
+# Prints the list of threshold-values contained in the threshold-declaration bodies of a given file.
+# given file.
+#
+# Arguments:
+# * <file>
+#
+# Return status:
+# 0: success
+# 1: <file> contains malform threshold-declaration bodies
+function threshold_values_in_ {
+   # Gets the lines right after the declaration headers in <file>, containing (possibly malformed)
+   # declaration bodies.
+   local -r declaration_bodies=`line_numbered_declaration_component_ --body "$1"`
+
+   # Makes sure the declaration bodies are all valid, or returns on failure.
+   assert_declaration_body_validity_ "$declaration_bodies" || return 1
+
+   # Gets the declaration bodys' values.
+   local -r declaration_body_values=`cut -d '=' -f 2 <<< "$declaration_bodies" | egrep -o '[0-9]+'`
+
+   echo "$declaration_body_values"
+   return 0
+}
 
 
+#-Main------------------------------------------#
+
+assert_correct_argument_count_ 1 '<.ino file>' || exit 1 #RS=1
 declare_constants "$@"
 
-# Establishes that an existing `.ino`-file was passed, and creates constants for the program.
-assert_path_validity_ "$ino_file" --ino || exit $?
+# Makes sure the given file is valid, or returns on failure.
+assert_path_validity_ "$ino_file" --ino || exit 2 #RS=2
 
-# Gets the lists of microphone-identifiers.
-microphone_identifiers=`get_microphone_identifiers_ "$ino_file"` || exit $?
+# Gets the lists of microphone-identifiers contained in <.ino file>'s threshold-declarations. If any
+# threshold-declaration headers have the same microphone-identifier, an error is printed and a
+# return on failure occurs.
+microphone_identifiers=`microphone_identifiers_in_ "$ino_file"` || exit 3 #RS=3
 
-# Early exit if no declarations were found.
+# Returns early if no declarations and therefore no microphone-identifiers were found.
 [ -n "$microphone_identifiers" ] || exit 0
 
-# Gets the list of threshold-values in the same order as the microphone-identifiers.
-threshold_values=`get_threshold_values_ "$ino_file"` || exit $?
-
-# Sanity check.
-if [ `wc -l <<< "$microphone_identifiers"` -ne `wc -l <<< "$threshold_values"` ]; then
-   echo "Error: \`$script_name\` found different numbers of microphone-identifiers" \
-        "and threshold-values" >&2
-   exit 6
-fi
+# Gets the list of threshold-values contained in <.ino file>'s threshold-declarations in the same
+# order as the microphone-identifiers. If any threshold-declaration bodies are malformed, an error
+# is printed and a return on failure occurs.
+threshold_values=`threshold_values_in_ "$ino_file"` || exit 4 #RS=4
 
 # Merges the threshold configuration items into joined lines.
-threshold_configuration=`paste -d ':' <(echo "$microphone_identifiers") <(echo "$threshold_values")`
+readonly threshold_configuration=`
+   paste -d ':' <(echo "$microphone_identifiers") <(echo "$threshold_values")
+`
 
-# Writes the (formatted) current threshold-configuration to stdout.
+# Prints the (formatted) threshold-configuration generated from the <.ino file>.
 sed -e 's/:/: /' <<< "$threshold_configuration"
 exit 0
