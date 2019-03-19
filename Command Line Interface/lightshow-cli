@@ -33,7 +33,7 @@ dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 #-Constants-------------------------------------#
 
 
-# CLI-SUPPORTING-FILES-FOLDER-FLAG
+# CLI-SUPPORTING-FILES-FOLDER
 readonly cli_supporting_files_folder="$dot"
 readonly subcommand=$1; shift
 

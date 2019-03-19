@@ -167,14 +167,16 @@ function install_arduino_cli_ {
 function complete_cli_script_ {
    # Gets the path of the CLI-script, relative to the repository as specified by <utility file:
    # file locations>.
-   local -r repo_path="`location_of_ --repo-cli-directory`/`location_of_ --cli-uninstaller`"
+   local -r repo_path="`location_of_ --repo-cli-directory`/`location_of_ --cli-command`"
    # Gets the path to the CLI-script as specified by <utility file: file locations>.
    local -r cli_script="$repository_folder/$repo_path"
    # Gets the regular expression used to search for the "CLI supporting files folder"-tag as
    # specified by <utility file: regular expressions>.
    local -r tag_pattern=`regex_for_ --cli-supporting-files-folder-tag`
    # Gets the line in the CLI-script containing the "CLI supporting files folder"-tag.
-   local -r tag_line=$(egrep -n "$tag_pattern" "$cli_script")
+   local -r tag_line=`egrep -n "$tag_pattern" "$cli_script"`
+
+   cat "$cli_script"
 
    # Makes sure that a line with the folder-tag was found, or prints an error and returns on
    # failure.
@@ -226,7 +228,7 @@ function set_uninstall_ardunio_cli_flag_ {
    # specified by <utility file: regular expressions>.
    local -r tag_pattern=`regex_for_ --uninstall-arduino-cli-flag-tag`
    # Gets the line in the uninstaller-script containing the "uninstall Arduino CLI flag"-tag.
-   local -r tag_line=$(egrep -n "$tag_pattern" "$uninstaller_script")
+   local -r tag_line=`egrep -n "$tag_pattern" "$uninstaller_script"`
 
    # Makes sure that a line with the flag-tag was found, or prints a warning and returns on failure.
    if [ -z "$tag_line" ]; then
