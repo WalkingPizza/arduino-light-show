@@ -176,8 +176,6 @@ function complete_cli_script_ {
    # Gets the line in the CLI-script containing the "CLI supporting files folder"-tag.
    local -r tag_line=`egrep -n "$tag_pattern" "$cli_script"`
 
-   cat "$cli_script"
-
    # Makes sure that a line with the folder-tag was found, or prints an error and returns on
    # failure.
    if [ -z "$tag_line" ]; then
@@ -195,7 +193,7 @@ function complete_cli_script_ {
    # Constructs a string containing the line, with everything after the equals-sign replaced by the
    # relevant path.
 
-   local -r folder_declaration_line=`sed -n '52p' "$cli_script"`
+   local -r folder_declaration_line=`sed -n "${folder_line_number}p" "$cli_script"`
    local -r folder_declaration_prefix=`egrep -o '.*=' <<< "$folder_declaration_line"`
 
    # Makes sure the folder declaration was wellformed, or prints an error and returns on failure.
