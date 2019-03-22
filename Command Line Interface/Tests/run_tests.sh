@@ -3,6 +3,8 @@
 # This script is used to run all test-files in the directory of this script. A test-file is any file
 # whose name starts with "test_".
 
+# TODO: Add unit tests for (some of) the utilities.sh-functions
+
 
 # Gets the directory of this script.
 dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)

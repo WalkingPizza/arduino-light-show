@@ -24,6 +24,9 @@
 * line 3: Unfinished
 * line 45:    Implement
 ---
+### `run_tests.sh`:
+* line 6: Add unit tests for (some of) the utilities.sh-functions
+---
 ### `utilities.sh`:
-* line 279: tty is preferable
-* line 6: Factor out the interactive testing methodology into functions and constants in this file
+* line 299: tty is preferable
+* line 95: https://stackoverflow.com/q/55301446/3208492

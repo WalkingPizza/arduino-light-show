@@ -3,11 +3,19 @@
 # This script serves as a library of functions to be used by the CLI's test-scripts. It can be
 # "imported" via sourcing. It should be noted that this script activates alias expansion.
 
-# TODO: Factor out the interactive testing methodology into functions and constants in this file
-
 
 #-Preliminaries---------------------------------#
 
+
+# Sets up an include guard.
+[ -z "$CLI_TESTING_UTILITIES_INCLUDED" ] && readonly CLI_TESTING_UTILITIES_INCLUDED=true || return
+
+# Gets the directory of this script.
+_dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
+# Imports the CLI-utilities.
+. "$_dot/../Utilities/utilities.sh"
+# (Re)sets the dot-variable after imports.
+dot="$_dot"
 
 # Turns on alias-expansion explicitly as users of this script will probably be non-interactive
 # shells.
@@ -82,4 +90,88 @@ function _report_if_output_matches {
    fi
 
    return 0
+}
+
+# TODO: https://stackoverflow.com/q/55301446/3208492
+# This function is used to write to stdin and read from stdout of a given command, while it is
+# running. This means that commands expecting input from stdin can be used programmatically.
+#
+# The command (now called "target") and its arguments are simply passed simply as arguments to this
+# function. The commands meant to interact with the target (now called "actions"), are to be passed
+# via stdin.
+# The actions are run in an environment where their stdout writes to the target's stdin and vice
+# versa. This allows the actions to read from and write to the target.
+# Output by the target which was not read by the actions, is printed to this functions stdout, once
+# the actions have finished running. This does not necessarily mean that the target has finished
+# running at that time.
+#
+# Arguments:
+# * <target command>
+# * <action commands> via stdin
+#
+# Return status:
+# $? of <command>
+function interactively- {
+   # Secures the commands currently run on exiting.
+   local -r base_exit_commands=`commands_for_trap_with_signal_ EXIT`
+
+   # Creates the directory in which the named pipes will live.
+   local -r pipe_directory=`mktemp -d`
+
+   # Defines the first step of cleanup for this function (removing the created directory) and makes
+   # sure it is run when the current shell exits.
+   local -r directory_cleanup="rm -r \"$pipe_directory\""
+   trap "$directory_cleanup; `commands_for_trap_with_signal_ EXIT`" EXIT
+
+   # Creates the named pipes which will redirect the interactive commands' stdout to <command>'s
+   # stdin and vice versa.
+   local -r command_stdin="$pipe_directory/command_stdin"
+   local -r command_stdout="$pipe_directory/command_stdout"
+   mkfifo "$command_stdin"
+   mkfifo "$command_stdout"
+
+   # Calls the command as background process using the named pipes for redirection and secures its
+   # PID.
+   "$@" <"$command_stdin" >"$command_stdout" &
+   local -r command_pid=$!
+
+   # Defines the second step of cleanup for this function (killing the <command>'s process) and
+   # makes sure it is run when the current shell exits.
+   local -r process_cleanup="ps -p $command_pid &>/dev/null && kill -TERM $command_pid"
+   trap "$process_cleanup; `commands_for_trap_with_signal_ EXIT`" EXIT
+
+   # Checks if there is any input on stdin, and gets all of the interactive commands by reading it,
+   # if there is any.
+   # The method of doing this is dependant on the Bash version running.
+   if [ "$BASH_VERSINFO" -gt 3 ]; then
+      read -t 0 && local -r interactive_commands=`cat`
+   else
+      if read -t 1; then
+         local -r newline=$'\n'
+         local -r interactive_commands="$REPLY$newline`cat`"
+      fi
+   fi
+
+   # Runs the interactive commands (if there are any) in an environment where stdout writes to
+   # <command>'s stdin and <command>'s stdout writes to stdin.
+   # If is important that this point in the funtion is reached, as this unblocks <command> by
+   # completing the connection of the named pipes.
+   {
+      [ -n "$interactive_commands" ] || return
+      eval "$interactive_commands"
+   } >"$command_stdin" <"$command_stdout"
+
+   # Prints unread output of <command> to stdout.
+   cat <"$command_stdout"
+
+   # Waits for <command> to finish running and captures its return status.
+   wait $command_pid
+   local -r return_status=$?
+
+   # Performs cleanup for this function and returns the exit trap to its initial state.
+   eval "$directory_cleanup; $process_cleanup"
+   trap "$base_exit_commands" EXIT
+
+   # Returns with the <command>'s return status.
+   return $return_status
 }

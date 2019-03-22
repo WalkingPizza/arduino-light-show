@@ -11,21 +11,15 @@
 #-Preliminaries---------------------------------#
 
 
+# Sets up an include guard.
+[ -z "$CLI_UTILITIES_INCLUDED" ] && readonly CLI_UTILITIES_INCLUDED=true || return
+
 # Turns on alias-expansion explicitly as users of this script will probably be non-interactive
 # shells.
 shopt -s expand_aliases
 
 # Gets the directory of this script.
 dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
-
-
-#-Constants-------------------------------------#
-
-
-# The file referenced for getting regular expression patterns.
-readonly _regex_file="$dot/regular_expressions"
-# The file referenced for getting the (intended) locations of certain files.
-readonly _location_file="$dot/file_locations"
 
 
 #-Functions-------------------------------------#
@@ -93,6 +87,30 @@ function silently- {
    return $?
 }
 
+# Returns the commands associated with the trap for a given signal in the current shell.
+#
+# Arguments:
+# * <trap signal>
+#
+# Return status:
+# 0: success
+# 1: <trap signal> is not valid
+function commands_for_trap_with_signal_ {
+   # Makes sure <trap signal> is valid.
+   trap -p "$1" &>/dev/null || return 1
+
+   # Gets a string containing the commands currently associated with the trap with <trap signal>.
+   local -r raw_commands=`trap -p "$1"`
+   # Removes the `trap -p`-prefix from the string.
+   local -r prefixless_commands=`sed -e "1s/^[^']*'//g" <<< "$raw_commands"`
+   # Removes the `trap -p`-suffix from the prefixless string.
+   local -r commands=`sed -e "\$ s/'[^']*\$//g" <<< "$prefixless_commands"`
+
+   # Prints the commands and returns successfully.
+   echo "$commands"
+   return 0
+}
+
 # Prints all of the lines of <file> immediately following the line containing only <string> upto the
 # next empty line. It is expected for there to be exactly one line containing only <string>.
 #
@@ -125,22 +143,24 @@ function lines_after_unique_ {
 }
 
 # Prints the regular expression pattern used to match a type of item identified by a given <flag>.
-# All patterns are taken from the <utility file: regular expressions>.
+# All patterns are taken from a given file defaulting to <utility file: regular expressions>.
 #
 # Arguments:
+# * <regular expression file> passed automatically by the alias
 # * <flag>, possible values: *see below*
 #
 # Return status:
 # 0: success
-# 1: the given <flag> is invalid
-# 2: internal error
-function regex_for_ {
+# 1: <flag> is invalid
+# 2: <regular expression file> does not contain <flag>'s identifier-string
+alias regex_for_="_regex_for_ '$dot/regular_expressions' "
+function _regex_for_ {
    # The string used to search the regex-file for a certain pattern.
    local regex_identifier
 
    # Sets the search string according to the given flag, or prints an error and returns on failure
    # if an unknown flag was passed.
-   case "$1" in
+   case "$2" in
       --header-candidate)
          regex_identifier='Threshold declaration header candidate:' ;;
       --header)
@@ -156,18 +176,16 @@ function regex_for_ {
       --cli-supporting-files-folder-tag)
          regex_identifier='CLI supporting files folder tag:' ;;
       *)
-         echo "Error: \`${FUNCNAME[0]}\` received invalid flag \"$1\"" >&2
+         echo "Error: \`${FUNCNAME[0]}\` received invalid flag \"$2\"" >&2
          return 1 ;;
    esac
 
    # Prints the lines following the search string in the regex-file, or returns on failure if that
    # operation fails.
-   lines_after_unique_ "$regex_identifier" "$_regex_file" || return 2
+   lines_after_unique_ "$regex_identifier" "$1" || return 2
 
    return 0
 }
-
-# These locations are relative to the CLI-folder if contained within it.
 
 # Prints the path of files/directories identified by a given <flag>.
 # Paths to files/directories within the CLI-directory are given relative to the CLI-directory.
@@ -175,22 +193,24 @@ function regex_for_ {
 # the repository.
 # Paths outside of the repository are given as absolute, with tilde expansion performed beforehand.
 #
-# All paths are taken from the <utility file: file paths>.
+# All paths are taken from a given file defaulting to <utility file: file paths>.
 #
 # Arguments:
+# * <file locations file> passed automatically by the alias
 # * <flag>, possible values: *see below*
 #
 # Return status:
 # 0: success
-# 1: the given <flag> is invalid
-# 2: internal error
-function location_of_ {
+# 1: <flag> is invalid
+# 2: <file locations file> does not contain <flag>'s identifier-string
+alias location_of_="_location_of_ '$dot/file_locations' "
+function _location_of_ {
    # The string used to search the location-file for certain paths.
    local location_identifier
 
    # Sets the search string according to the given flag, or prints an error and returns on failure
    # if an unknown flag was passed.
-   case "$1" in
+   case "$2" in
       --repo-cli-directory)               location_identifier='Repository CLI-directory:'        ;;
       --cli-command)                      location_identifier='CLI-command:'                     ;;
       --cli-uninstaller)                  location_identifier='CLI-uninstaller:'                 ;;
@@ -201,13 +221,13 @@ function location_of_ {
       --arduino-cli-source)               location_identifier='Arduino-CLI source:'              ;;
       --arduino-cli-destination)          location_identifier='Arduino-CLI destination:'         ;;
       *)
-         echo "Error: \`${FUNCNAME[0]}\` received invalid flag \"$1\"" >&2
+         echo "Error: \`${FUNCNAME[0]}\` received invalid flag \"$2\"" >&2
          return 1 ;;
    esac
 
    # Gets the lines matched in the location-file for the given identifier, or returns on failure if
    # that operation fails.
-   local -r raw_paths=`lines_after_unique_ "$location_identifier" "$_location_file"` || return 2
+   local -r raw_paths=`lines_after_unique_ "$location_identifier" "$1"` || return 2
 
    # Performs explicit tilde expansion and prints the resulting paths.
    while read path; do
