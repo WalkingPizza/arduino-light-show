@@ -60,7 +60,7 @@ report_if_last_status_was 2
 
 # Test: Empty `.ino`-file
 
-> "$test_ino_file"
+>"$test_ino_file"
 
 output=`silently- --stderr "$test_command" "$test_ino_file"`
 report_if_output_matches "$output" ''
@@ -68,7 +68,7 @@ report_if_output_matches "$output" ''
 
 # Test: Potential declaration headers
 
-cat << END > "$test_ino_file"
+cat << END >"$test_ino_file"
 // #threshold "A
 // #threshold B"
 // #threshold "Actual"
@@ -85,7 +85,7 @@ report_if_output_matches --numeric "`wc -l <<< "$errors"`" 6
 
 # Test: Duplicate microphone identifiers
 
-cat << END > "$test_ino_file"
+cat << END >"$test_ino_file"
 // #threshold "A"
 // #threshold "B"
 // #threshold "A"
@@ -97,7 +97,7 @@ report_if_last_status_was 3
 
 # Test: Malformed declaration body
 
-cat << END > "$test_ino_file"
+cat << END >"$test_ino_file"
 // #threshold "A"
 const int a = 1;
 
@@ -111,7 +111,7 @@ report_if_last_status_was 4
 
 # Test: Perfect `.ino`-file
 
-cat << END > "$test_ino_file"
+cat << END >"$test_ino_file"
 // #threshold "A"
 const int a = 1;
 
@@ -125,7 +125,7 @@ report_if_output_matches "$output" $'A: 1\nB C: 2'
 
 # Test: `.ino`-file without declarations
 
-cat << END > "$test_ino_file"
+cat << END >"$test_ino_file"
 #include <stdio.h>
 int main() {
    printf("hello world");
@@ -138,7 +138,7 @@ report_if_output_matches "$output" ''
 
 # Test: Messy `.ino`-file
 
-cat << END > "$test_ino_file"
+cat << END >"$test_ino_file"
 // #threshold "#threshold #1"
 const int a = 1;
 

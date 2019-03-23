@@ -32,7 +32,6 @@ mkdir "$test_device_folder"
 
 trap cleanup EXIT
 function cleanup {
-   echo "cleanup" >&2
    rm -r "$test_device_folder"
 }
 

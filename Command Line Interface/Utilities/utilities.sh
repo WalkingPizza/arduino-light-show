@@ -1,10 +1,13 @@
 #!/bin/bash
 
 # This script serves as a library of functions to be used by other scripts in the CLI. It can be
-# "imported" via sourcing. The script makes use of other files, namely:
+# "imported" via sourcing.
+#
+# The script makes use of the files:
 # * file_locations
 # * regular_expressions
 # ... which are expected to be in the same directory.
+#
 # It should be noted that this script activates alias expansion.
 
 
@@ -20,6 +23,16 @@ shopt -s expand_aliases
 
 # Gets the directory of this script.
 dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
+
+
+#-Constants-------------------------------------#
+
+
+# Declares color codes for printing.
+readonly print_red='\033[0;31m'
+readonly print_green='\033[0;32m'
+readonly print_yellow='\033[0;33m'
+readonly print_normal='\033[0m'
 
 
 #-Functions-------------------------------------#

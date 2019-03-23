@@ -22,15 +22,6 @@ dot="$_dot"
 shopt -s expand_aliases
 
 
-#-Constants-------------------------------------#
-
-
-# Declares color codes for printing.
-readonly _color_red='\033[0;31m'
-readonly _color_green='\033[0;32m'
-readonly _color_normal='\033[0m'
-
-
 #-Functions-------------------------------------#
 
 
@@ -48,9 +39,9 @@ function _report_if_last_status_was {
 
    # Prints a message depending on whether <last return status> has the expected value or not.
    if [ "$return_status" -eq "$2" ]; then
-      echo -e "> $_color_green$1\tOK$_color_normal"
+      echo -e "> $print_green$1\tOK$print_normal"
    else
-      echo -e "> $_color_red$1\tNO: Expected return status $2, but got $return_status$_color_normal"
+      echo -e "> $print_red$1\tNO: Expected return status $2, but got $return_status$print_normal"
    fi
 
    return 0
@@ -84,15 +75,14 @@ function _report_if_output_matches {
 
    # Prints a message depending on whether the output matched or not (as determined above).
    if $output_matches; then
-      echo -e "> $_color_green$2\tOK$_color_normal"
+      echo -e "> $print_green$2\tOK$print_normal"
    else
-      echo -e "> $_color_red$2\tNO: Expected different output$_color_normal"
+      echo -e "> $print_red$2\tNO: Expected different output$print_normal"
    fi
 
    return 0
 }
 
-# TODO: https://stackoverflow.com/q/55301446/3208492
 # This function is used to write to stdin and read from stdout of a given command, while it is
 # running. This means that commands expecting input from stdin can be used programmatically.
 #
@@ -105,23 +95,28 @@ function _report_if_output_matches {
 # the actions have finished running. This does not necessarily mean that the target has finished
 # running at that time.
 #
+# The function will always run in a subshell.
+#
 # Arguments:
 # * <target command>
 # * <action commands> via stdin
 #
 # Return status:
 # $? of <command>
-function interactively- {
-   # Secures the commands currently run on exiting.
-   local -r base_exit_commands=`commands_for_trap_with_signal_ EXIT`
+#
+# TODO: Iron out the race conditions by having some kind of detection of input being read/expected.
+function interactively- { ( _interactively- "$@" ); }
+function _interactively- {
+   # Overwrites the EXIT trap so that the 'commands_for_trap_with_signal_' command works properly.
+   # This is because: https://lists.gnu.org/archive/html/info-gnu/2011-02/msg00012.html
+   # This function is assured to be running in a subshell.
+   trap - EXIT
 
    # Creates the directory in which the named pipes will live.
    local -r pipe_directory=`mktemp -d`
 
-   # Defines the first step of cleanup for this function (removing the created directory) and makes
-   # sure it is run when the current shell exits.
-   local -r directory_cleanup="rm -r \"$pipe_directory\""
-   trap "$directory_cleanup; `commands_for_trap_with_signal_ EXIT`" EXIT
+   # Adds the removal of the pipe directory to the EXIT trap.
+   trap "rm -r \"$pipe_directory\"" EXIT
 
    # Creates the named pipes which will redirect the interactive commands' stdout to <command>'s
    # stdin and vice versa.
@@ -133,17 +128,16 @@ function interactively- {
    # Calls the command as background process using the named pipes for redirection and secures its
    # PID.
    "$@" <"$command_stdin" >"$command_stdout" &
-   local -r command_pid=$!
+   local -r command_pid="$!"
 
-   # Defines the second step of cleanup for this function (killing the <command>'s process) and
-   # makes sure it is run when the current shell exits.
+   # Adds the killing of <command>'s process as cleanup step to the EXIT trap.
    local -r process_cleanup="ps -p $command_pid &>/dev/null && kill -TERM $command_pid"
    trap "$process_cleanup; `commands_for_trap_with_signal_ EXIT`" EXIT
 
    # Checks if there is any input on stdin, and gets all of the interactive commands by reading it,
    # if there is any.
    # The method of doing this is dependant on the Bash version running.
-   if [ "$BASH_VERSINFO" -gt 3 ]; then
+   if [ "${BASH_VERSINFO[0]}" -gt 3 ]; then
       read -t 0 && local -r interactive_commands=`cat`
    else
       if read -t 1; then
@@ -164,14 +158,7 @@ function interactively- {
    # Prints unread output of <command> to stdout.
    cat <"$command_stdout"
 
-   # Waits for <command> to finish running and captures its return status.
+   # Waits for <command> to finish running and returns with the <command>'s return status.
    wait $command_pid
-   local -r return_status=$?
-
-   # Performs cleanup for this function and returns the exit trap to its initial state.
-   eval "$directory_cleanup; $process_cleanup"
-   trap "$base_exit_commands" EXIT
-
-   # Returns with the <command>'s return status.
-   return $return_status
+   return $?
 }

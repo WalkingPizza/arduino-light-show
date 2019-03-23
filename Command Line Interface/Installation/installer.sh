@@ -89,8 +89,8 @@ function setup_cli_supporting_files_folder_ {
    # to reinstall a return on failure occurs.
    if [ -d "$cli_supporing_files_destination" ]; then
       # Prompts the user and asks them for their decision.
-      echo 'It seems you have already run this installation.' >&2
-      echo 'Do you want to reinstall? [y or n]' >&2
+      echo 'It seems you have run this installation before.' >&2
+      echo -e '\033[0;32mDo you want to reinstall? [y or n]\033[0m' >&2
       succeed_on_approval_ || return 1
 
       # This is only executed if the user chose to reinstall.
@@ -157,7 +157,6 @@ function install_arduino_cli_ {
    return 0
 }
 
-# TODO: Test this
 # Writes the location of the CLI's supporting files folder into the CLI-script.
 #
 # Return status:

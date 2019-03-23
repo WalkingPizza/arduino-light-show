@@ -79,7 +79,7 @@ touch "$test_device_folder/usb1 with spaces"
 touch "$test_device_folder/usb2"
 touch "$test_device_folder/not_us_b"
 
-output=`silently-  --stderr "$test_command" "$test_device_folder" <<< '1'`
+output=`silently- --stderr "$test_command" "$test_device_folder" <<< '1'`
 report_if_output_matches "$output" "$test_device_folder/usb1 with spaces"
 
 rm -r "$test_device_folder/"*

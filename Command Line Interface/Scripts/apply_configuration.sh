@@ -92,6 +92,7 @@ function declaration_line_numbers_in {
       # Checks if the current line is the "threshold declarations end"-tag, in which case no further
       # lines need to be read.
       elif egrep -q "`regex_for_ --end-tag`" <<< "$line"; then
+         echo $line_counter
          break
       fi
 

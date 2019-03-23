@@ -65,39 +65,38 @@ report_if_last_status_was 2
 
 # Test: Malformed configuration entries
 
-echo 'invalid' > "$test_configuration"
-echo $'some valid: 123\nother valid: 001' > "$test_configuration"
+echo $'some valid: 123\nother valid: 001' >"$test_configuration"
 silently- "$test_command" "$test_configuration" "$test_ino_file"
 report_if_last_status_was 3
 
-echo 'invalid: 123;' > "$test_configuration"
+echo 'invalid: 123;' >"$test_configuration"
 silently- "$test_command" "$test_configuration" "$test_ino_file"
 report_if_last_status_was 3
 
-echo 'invalid 456' > "$test_configuration"
+echo 'invalid 456' >"$test_configuration"
 silently- "$test_command" "$test_configuration" "$test_ino_file"
 report_if_last_status_was 3
 
-echo ':nvalid: 456' > "$test_configuration"
+echo ':nvalid: 456' >"$test_configuration"
 silently- "$test_command" "$test_configuration" "$test_ino_file"
 report_if_last_status_was 3
 
-echo 'invalid:9' > "$test_configuration"
+echo 'invalid:9' >"$test_configuration"
 silently- "$test_command" "$test_configuration" "$test_ino_file"
 report_if_last_status_was 3
 
 
 # Test: Configuration with duplicate microphone-identifier
 
-echo $'duplicate: 1\nother: 2\nduplicate: 3' > "$test_configuration"
+echo $'duplicate: 1\nother: 2\nduplicate: 3' >"$test_configuration"
 silently- "$test_command" "$test_configuration" "$test_ino_file"
 report_if_last_status_was 4
 
 
 # Test: Valid, equally sized configurations
 
-echo $'first: 10\nsecond: 20\nthird: 30' > "$test_configuration"
-cat << END > "$test_ino_file"
+echo $'first: 10\nsecond: 20\nthird: 30' >"$test_configuration"
+cat << END >"$test_ino_file"
 int something_before;
 
 // #threshold "one"
@@ -141,8 +140,8 @@ report_if_output_matches "`cat "$test_ino_file"`" "$expected_output"
 
 # Test: Valid, equally sized, dense configurations
 
-echo $'first: 10\nsecond: 20\nthird: 30' > "$test_configuration"
-cat << END > "$test_ino_file"
+echo $'first: 10\nsecond: 20\nthird: 30' >"$test_configuration"
+cat << END >"$test_ino_file"
 int something_before;
 // #threshold "one"
 const int threshold_declaration_0_value = 1;
@@ -176,8 +175,8 @@ report_if_output_matches "`cat "$test_ino_file"`" "$expected_output"
 
 # Test: Valid, non-equally sized configurations
 
-echo $'first: 10\nsecond: 20\nthird: 30' > "$test_configuration"
-cat << END > "$test_ino_file"
+echo $'first: 10\nsecond: 20\nthird: 30' >"$test_configuration"
+cat << END >"$test_ino_file"
 int something_before;
 // #threshold "just this one"
 const int threshold_declaration_0_value = 987654321;

@@ -3,7 +3,7 @@
    
 ---
 ### `apply_configuration.sh`:
-* line 166: Remove any uses of "threshold_declaration_[n >= number of declarations]_value"
+* line 167: Remove any uses of "threshold_declaration_[n >= number of declarations]_value"
 ---
 ### `arduino_path_diff.sh`:
 * line 75: figure out if this makes sense
@@ -12,12 +12,9 @@
 * line 66: does this make sense
 ---
 ### `configure_thresholds.sh`:
-* line 36: Get the Arduino's path
-* line 37: Compile and upload the program file to the Arduino
-* line 3: Unfinished
+* line 113: Get the Arduino's path, compile the program file and upload it to the Arduino
 ---
 ### `installer.sh`:
-* line 160: Test this
 * line 23: Add a different "supporting files" destination for Linux
 ---
 ### `lightshow-cli`:
@@ -28,5 +25,5 @@
 * line 6: Add unit tests for (some of) the utilities.sh-functions
 ---
 ### `utilities.sh`:
-* line 299: tty is preferable
-* line 95: https://stackoverflow.com/q/55301446/3208492
+* line 107: Iron out the race conditions by having some kind of detection of input being read/expected.
+* line 312: tty is preferable
