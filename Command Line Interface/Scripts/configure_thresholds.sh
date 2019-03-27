@@ -20,7 +20,8 @@
 # Gets the directory of this script.
 _dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 # Imports CLI utilities.
-. "$_dot/../Utilities/utilities.sh"
+. "$_dot/../Libraries/utilities.sh"
+. "$_dot/../Libraries/constants.sh"
 # (Re)sets the dot-variable after imports.
 dot="$_dot"
 
@@ -30,36 +31,103 @@ dot="$_dot"
 
 # The function wrapping all constant-declarations for this script.
 function declare_constants {
-   # Gets the program file, which should be the only `.ino`-file in the CLI's supporting files
-   # folder.
-   readonly program_file=`ls -1 "$dot/../"*\.ino`
+   # Sets the location of the folder holding the program file(s) as the first command line
+   # argument, or to the one specified by <utility file: file locations> if none was passed.
+   if [ -n "$1" ]; then
+      readonly program_folder=${1%/}
+   else
+      readonly program_folder="$dot/../../`location_of_ --repo-program-directory`"
+   fi
+
+   # Gets the program file, which should be the only file in the program-folder ending in ".ino".
+   readonly program_file="$program_folder/`ls -1 "$program_folder" | egrep '\.ino$'`"
    # Creates a file in which the configuration can be saved.
    readonly configuration_file=`mktemp`
    # Creates a file in which errors can be collected.
    readonly error_pool=`mktemp`
+}
 
-   # Defines the error message for malformed configuration entries.
-   readonly malformed_configuration_message=`cat << END
-${print_red}The specified configuration contains malformed entries.$print_normal
 
-Entries must have the form:
-${print_yellow}<microphone-identifier>: <threshold-value>$print_normal
+#-Functions-------------------------------------#
 
-The characters $print_yellow"$print_normal and $print_yellow:$print_normal may not be used in \
-$print_yellow<microphone-identifier>${print_normal}s.
-The $print_yellow<threshold-value>$print_normal must be an integer not starting with a \
-${print_yellow}0$print_normal (unless it is exactly ${print_yellow}0$print_normal).
-END`
 
-   # Defines the error message for duplicate microphone identifiers.
-   readonly duplicate_identifier_message=`cat << END
-${print_red}The specified configuration contains duplicate microphone-identifiers.$print_normal
+# Opens the configuration file in Vi, and allows the user to edit it. The user will be prompted to
+# rewrite the configuration as long as it is malformed. They also have the option to quit.
+#
+# Return status:
+# 0: success
+# 1: internal error
+# 2: the user chose to quit
+function carry_out_configuration_editing_ {
+   # Loops until the specified configuration is valid or the user quits.
+   while true; do
+      # Opens the configuration in Vi to allow the user to edit it.
+      vi "$configuration_file"
 
-Entries must have the form:
-$print_yellow<microphone-identifier>: <threshold-value>$print_normal
+      # Tries to apply the user-specified configuration to the program file, while saving any error
+      # messages.
+      "$dot/apply_configuration.sh" "$configuration_file" "$program_file" 2>"$error_pool"
 
-No two $print_yellow<microphone-identifier>${print_normal}s may be identical.
-END`
+      # Checks the success of the previous operation.
+      case $? in
+         # Breaks out of the loop if the operation was successful.
+         0) break ;;
+
+         # Sets an appropriate error-message if the operation failed on a recoverable error.
+         3) error_message=`message_for_ --ct-malformed-configuratation` ;;
+         4) error_message=`message_for_ --ct-duplicate-identifiers` ;;
+
+         # Prints an error message and returns on failure if any other error occured.
+         *) echo 'Internal error:'; cat "$error_pool"; return 1 ;;
+      esac
+
+      # This point is only reached if a recoverable error occured.
+      # Prints an error message and prompts the user for reconfiguration or exit.
+      clear
+      echo -e "$error_message"
+      echo -e "\n${print_green}Do you want to try again? [y or n]$print_normal"
+      succeed_on_approval_ || return 2
+   done
+
+   return 0
+}
+
+# Tries to set the variables $arduino_fqbn and $arduino_port, by getting those traits from the only
+# Arduino currently attached to the computer. If there are no, or multiple Arduinos attached, the
+# user will be prompted to fix the issue until there is only one. They also have the option to quit.
+#
+# Return status:
+# 0: success
+# 1: internal error
+# 2: the user chose to quit
+function set_arduino_trait_variables_ {
+   # Loops until the specified configuration is valid or the user quits.
+   while true; do
+      # Gets the Arduino's FQBN and port, while saving any error messages.
+      arduino_fqbn=`"$dot/arduino_trait.sh" --fqbn 2>"$error_pool"`
+      arduino_port=`"$dot/arduino_trait.sh" --port 2>"$error_pool"`
+
+      case $? in
+         # Breaks out of the loop if the operation was successful.
+         0) break ;;
+
+         # Sets an appropriate error-message if the operation failed on a recoverable error.
+         1) error_message=`message_for_ --ct-no-arduino` ;;
+         2) error_message=`message_for_ --ct-multiple-arduinos` ;;
+
+         # Prints an error message and returns on failure if any other error occured.
+         *) echo 'Internal error:'; cat "$error_pool"; return 1 ;;
+      esac
+
+      # This point is only reached if a recoverable error occured.
+      # Prints an error message and prompts the user to un-/replug the Arduino or exit.
+      clear
+      echo -e "$error_message"
+      echo -e "\n${print_green}Do you want to try again? [y or n]$print_normal"
+      succeed_on_approval_ || return 2
+   done
+
+   return 0
 }
 
 
@@ -79,37 +147,11 @@ if ! "$dot/threshold_configuration.sh" "$program_file" >"$configuration_file" 2>
    exit 2 #RS=2
 fi
 
-# Loops until the specified configuration is valid.
-while true; do
-   # Opens the configuration in Vi to allow the user to edit it.
-   vi "$configuration_file"
+carry_out_configuration_editing_ || exit $[$?+1] #RS+2=3
+set_arduino_trait_variables_ || exit $[$?+1] #RS1+2=3
 
-   # Tries to apply the user-specified configuration to the program file, while saving any error
-   # messages.
-   "$dot/apply_configuration.sh" "$configuration_file" "$program_file" 2>"$error_pool"
-   return_status=$?
-
-   # Checks the success of the previous operation.
-   case $return_status in
-      # Breaks out of the loop if the operation was successful.
-      0) break ;;
-
-      # Sets an appropriate error-message if the operation failed on a recoverable error.
-      3) error_message="$malformed_configuration_message" ;;
-      4) error_message="$duplicate_identifier_message" ;;
-
-      # Prints an error message and returns on failure if any other error occured.
-      *) echo 'Internal error:'; cat "$error_pool"; exit 2 ;; #RS=2
-   esac
-
-   # This point is only reached if a recoverable error occured.
-   # Prints an error message and prompts the user for reconfiguration or exit.
-   clear
-   echo -e "$error_message"
-   echo -e "\n${print_green}Do you want to try again? [y or n]$print_normal"
-   succeed_on_approval_ || exit 3 #RS=3
-done;
-
-# TODO: Get the Arduino's path, compile the program file and upload it to the Arduino
+# Compiles and uploads the program to the Arduino.
+silently- arduino-cli compile --fqbn "$arduino_fqbn" "$program_folder"
+silently- arduino-cli upload -p "$arduino_port" --fqbn "$arduino_fqbn" "$program_folder"
 
 exit 0

@@ -72,7 +72,6 @@ if [ -z "$added_devices" ]; then
    exit 4 #RS=4
 fi
 
-# TODO: figure out if this makes sense
 # Merges "tty"-prefixed devices onto equivalent "cu"-prefixed devices.
 readonly consolidated_new_devices=`merge_tty_onto_cu "$added_devices"`
 

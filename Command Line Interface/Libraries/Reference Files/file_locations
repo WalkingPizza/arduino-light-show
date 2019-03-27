@@ -16,31 +16,24 @@
 #-CLI-Directory-Relative------------------------#
 
 
-CLI-command:
-lightshow-cli
-
-CLI-uninstaller:
+CLI Uninstaller:
 Installation/uninstaller.sh
 
-CLI-scripts:
-Scripts/apply_configuration.sh
-Scripts/arduino_path_diff.sh
-Scripts/arduino_path_usb.sh
-Scripts/configure_thresholds.sh
-Scripts/threshold_configuration.sh
-Installation/uninstaller.sh
+CLI Scripts-directory:
+Scripts
 
-CLI-utilities:
-Utilities/utilities.sh
-Utilities/regular_expressions
-Utilities/file_locations
+CLI Libraries-directory:
+Libraries
 
 
 #-Repository-Relative---------------------------#
 
 
-Repository CLI-directory:
+Repo CLI-directory:
 Command Line Interface
+
+Repo Program-directory:
+Program
 
 
 #-Absolute--------------------------------------#

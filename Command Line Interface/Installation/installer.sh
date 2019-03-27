@@ -28,12 +28,14 @@
 
 # The function wrapping all constant-declarations for this script.
 function declare_constants {
-   # A URL to the Arduino Light Show repository.
+   # A hardcoded URL to the Arduino Light Show repository.
    readonly repository_url='https://github.com/WalkingPizza/arduino-light-show/archive/master.zip'
+   # A hardcoded path to the CLI-utilities, needed for bootstrapping the installation.
+   readonly cli_utilities='Command Line Interface/Libraries/utilities.sh'
+   # A hardcoded path to the CLI-constants, needed for bootstrapping the installation.
+   readonly cli_constants='Command Line Interface/Libraries/constants.sh'
    # The name of the folder as which the repository above will be unarchived.
    readonly repository_folder='arduino-light-show-master'
-   # A hardcoded path to the CLI-utilities, needed for bootstrapping the installation.
-   readonly cli_utilities='Command Line Interface/Utilities/utilities.sh'
    # A unique temporary working directory used as sandbox for the installation process.
    readonly working_directory=`mktemp -d`
 
@@ -153,6 +155,13 @@ function install_arduino_cli_ {
       return 3
    fi
 
+   echo 'Installing Arduino Core...'
+
+   # Gets the FQBN of the Arduino UNO.
+   local -r uno_fqbn=`name_of_ --arduino-uno-fbqn`
+   # Installs the Arduino-UNO board core.
+   silently- arduino-cli core install "$uno_fqbn"
+
    echo 'Installed Arduino CLI.'
    return 0
 }
@@ -166,7 +175,7 @@ function install_arduino_cli_ {
 function complete_cli_script_ {
    # Gets the path of the CLI-script, relative to the repository as specified by <utility file:
    # file locations>.
-   local -r repo_path="`location_of_ --repo-cli-directory`/`location_of_ --cli-command`"
+   local -r repo_path="`location_of_ --repo-cli-directory`/`name_of_ --cli-command`"
    # Gets the path to the CLI-script as specified by <utility file: file locations>.
    local -r cli_script="$repository_folder/$repo_path"
    # Gets the regular expression used to search for the "CLI supporting files folder"-tag as
@@ -245,42 +254,25 @@ function set_uninstall_ardunio_cli_flag_ {
 # Installs the Ardunio Light Show CLI by copying the CLI script as well as the CLI's supporting
 # files to their destinations as specified by <utility file: file locations>.
 function install_lightshow_cli {
-   # Gets the folder in which the CLI's supporting files are supposed to be installed as specified
-   # by <utility file: file locations>.
+   # Gets the folder in which the CLI's supporting files are supposed to be installed.
    local -r cli_supporing_files_destination=`location_of_ --cli-supporting-files-destination`
-   # Gets the repository-internal relative path to the repository's CLI-folder as specified by
-   # <utility file: file locations>.
+   # Gets the repository-internal relative path to the repository's CLI-folder.
    local -r repository_cli_directory=`location_of_ --repo-cli-directory`
 
    echo 'Installing Arduino Light Show CLI...'
 
-   # Moves all CLI supporting non-utility files as specified by <utility file: file locations> to
-   # the CLI's supporting files folder. Moving the utility-files would disrupt the further
-   # execution of this script.
-   location_of_ --cli-scripts | while read script_location; do
-      # Constructs the destination of the script in a way that maintains the same directory
-      # structure as is present in the repository.
-      local destination="$cli_supporing_files_destination/$script_location"
-      # Creates intermediate directories if needed and moves the script to its destination.
-      mkdir -p "`dirname "$destination"`"
-      mv "$repository_folder/$repository_cli_directory/$script_location" "$destination"
-   done
+   # Moves all of the directories that need to be moved to the CLI's supporting files folder.
+   while read directory; do mv "$directory" "$cli_supporing_files_destination"; done << END
+$repository_folder/$repository_cli_directory/$(location_of_ --cli-scripts-directory)
+$repository_folder/$repository_cli_directory/$(location_of_ --cli-uninstaller)
+$repository_folder/$repository_cli_directory/$(name_of_ --cli-command)
+$repository_folder/$(location_of_ --repo-program-directory)
+END
 
-   # Copies all CLI supporting utility files as specified by <utility file: file locations> to the
-   # CLI's supporting files folder. Moving the utility-files would disrupt the further execution of
-   # this script.
-   location_of_ --cli-utilities | while read utility_location; do
-      # Constructs the destination of the file in a way that maintains the same directory
-      # structure as is present in the repository.
-      local destination="$cli_supporing_files_destination/$utility_location"
-      # Creates intermediate directories if needed and copies the file to its destination.
-      mkdir -p "`dirname "$destination"`"
-      cp -R "$repository_folder/$repository_cli_directory/$utility_location" "$destination"
-   done
-
-   # Moves the CLI-command to its destination as specified by <utility file: file locations>.
-   mv "$repository_folder/$repository_cli_directory/`location_of_ --cli-command`" \
-      "`location_of_ --cli-command-destination`"
+   # Copies the libraries-directory to the CLI's supporting files folder. Moving the libraries
+   # directory could disrupt the further execution of this script.
+   cp "$repository_folder/$repository_cli_directory/`location_of_ --cli-libraries-directory`" \
+      "$cli_supporing_files_destination"
 
    echo 'Installed Arduino Light Show CLI.'
    return 0
@@ -298,6 +290,7 @@ trap "rm -rf \"$working_directory\"" EXIT
 # Sets up the installation environment including gaining access to the CLI's utility functions.
 setup_installation_environment_ || exit 1 #RS=1
 . "$repository_folder/$cli_utilities"
+. "$repository_folder/$cli_constants"
 
 # Sets up the CLI's supporting files folder and writes the path into the CLI-script.
 setup_cli_supporting_files_folder_ || exit 2 #RS=2

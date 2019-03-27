@@ -3,16 +3,13 @@
    
 ---
 ### `apply_configuration.sh`:
-* line 167: Remove any uses of "threshold_declaration_[n >= number of declarations]_value"
+* line 170: Remove any uses of "threshold_declaration_[n >= number of declarations]_value"
 ---
-### `arduino_path_diff.sh`:
-* line 75: figure out if this makes sense
+### `arduino_trait.sh`:
+* line 14: This is slow, so allow multiple flags at once
 ---
-### `arduino_path_usb.sh`:
-* line 66: does this make sense
----
-### `configure_thresholds.sh`:
-* line 113: Get the Arduino's path, compile the program file and upload it to the Arduino
+### `constants.sh`:
+* line 79:    Return on failure if a custom delimiter is never reached
 ---
 ### `installer.sh`:
 * line 23: Add a different "supporting files" destination for Linux
@@ -22,8 +19,7 @@
 * line 45:    Implement
 ---
 ### `run_tests.sh`:
-* line 6: Add unit tests for (some of) the utilities.sh-functions
+* line 6: Add unit tests for `arduino_trait.sh` and utility-functions
 ---
-### `utilities.sh`:
-* line 107: Iron out the race conditions by having some kind of detection of input being read/expected.
-* line 312: tty is preferable
+### `test_utilities.sh`:
+* line 108: Iron out the race conditions by having some kind of detection of input being read/expected.

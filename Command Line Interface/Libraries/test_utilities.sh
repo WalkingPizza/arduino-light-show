@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # This script serves as a library of functions to be used by the CLI's test-scripts. It can be
-# "imported" via sourcing. It should be noted that this script activates alias expansion.
+# "imported" via sourcing.
+# It should be noted that this script activates alias expansion.
 
 
 #-Preliminaries---------------------------------#
@@ -13,7 +14,7 @@
 # Gets the directory of this script.
 _dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 # Imports the CLI-utilities.
-. "$_dot/../Utilities/utilities.sh"
+. "$_dot/../Libraries/utilities.sh"
 # (Re)sets the dot-variable after imports.
 dot="$_dot"
 

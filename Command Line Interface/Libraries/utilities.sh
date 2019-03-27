@@ -2,12 +2,6 @@
 
 # This script serves as a library of functions to be used by other scripts in the CLI. It can be
 # "imported" via sourcing.
-#
-# The script makes use of the files:
-# * file_locations
-# * regular_expressions
-# ... which are expected to be in the same directory.
-#
 # It should be noted that this script activates alias expansion.
 
 
@@ -124,132 +118,6 @@ function commands_for_trap_with_signal_ {
    return 0
 }
 
-# Prints all of the lines of <file> immediately following the line containing only <string> upto the
-# next empty line. It is expected for there to be exactly one line containing only <string>.
-#
-# Arguments:
-# * <string>
-# * <file>
-#
-# Return status:
-# 0: success
-# 1: there were less or more than one line exactly matching <string> in <file>
-function lines_after_unique_ {
-   # Gets all of the lines in <file> exactly matching <string>.
-   local -r match_line=`egrep -n "^$1\$" "$2"`
-
-   # Makes sure that there was exactly one match line, or prints an error and returns on failure.
-   if ! [ `wc -l <<< "$match_line"` -eq 1 ]; then
-      echo "Error: \`${FUNCNAME[0]}\` did not match exactly one line" >&2
-      return 1
-   fi
-
-   # Gets the line number immediately following the line of <string>'s match in <file>.
-   local -r list_start=$[`cut -d : -f 1 <<< "$match_line"` + 1]
-
-   # Prints all of the lines in <file> starting from "$list_start", until an empty line is reached.
-   tail -n "+$list_start" "$2" | while read -r line; do
-      [ -n "$line" ] && echo "$line" || break
-   done
-
-   return 0
-}
-
-# Prints the regular expression pattern used to match a type of item identified by a given <flag>.
-# All patterns are taken from a given file defaulting to <utility file: regular expressions>.
-#
-# Arguments:
-# * <regular expression file> passed automatically by the alias
-# * <flag>, possible values: *see below*
-#
-# Return status:
-# 0: success
-# 1: <flag> is invalid
-# 2: <regular expression file> does not contain <flag>'s identifier-string
-alias regex_for_="_regex_for_ '$dot/regular_expressions' "
-function _regex_for_ {
-   # The string used to search the regex-file for a certain pattern.
-   local regex_identifier
-
-   # Sets the search string according to the given flag, or prints an error and returns on failure
-   # if an unknown flag was passed.
-   case "$2" in
-      --header-candidate)
-         regex_identifier='Threshold declaration header candidate:' ;;
-      --header)
-         regex_identifier='Threshold declaration header:' ;;
-      --body)
-         regex_identifier='Threshold declaration body:' ;;
-      --end-tag)
-         regex_identifier='Threshold declarations end tag:' ;;
-      --configuration-entry)
-         regex_identifier='Threshold configuration entry:' ;;
-      --uninstall-arduino-cli-flag-tag)
-         regex_identifier='Uninstall Arduino-CLI flag tag:' ;;
-      --cli-supporting-files-folder-tag)
-         regex_identifier='CLI supporting files folder tag:' ;;
-      *)
-         echo "Error: \`${FUNCNAME[0]}\` received invalid flag \"$2\"" >&2
-         return 1 ;;
-   esac
-
-   # Prints the lines following the search string in the regex-file, or returns on failure if that
-   # operation fails.
-   lines_after_unique_ "$regex_identifier" "$1" || return 2
-
-   return 0
-}
-
-# Prints the path of files/directories identified by a given <flag>.
-# Paths to files/directories within the CLI-directory are given relative to the CLI-directory.
-# Paths to files/directories within the repository but not the CLI-directory are given relative to
-# the repository.
-# Paths outside of the repository are given as absolute, with tilde expansion performed beforehand.
-#
-# All paths are taken from a given file defaulting to <utility file: file paths>.
-#
-# Arguments:
-# * <file locations file> passed automatically by the alias
-# * <flag>, possible values: *see below*
-#
-# Return status:
-# 0: success
-# 1: <flag> is invalid
-# 2: <file locations file> does not contain <flag>'s identifier-string
-alias location_of_="_location_of_ '$dot/file_locations' "
-function _location_of_ {
-   # The string used to search the location-file for certain paths.
-   local location_identifier
-
-   # Sets the search string according to the given flag, or prints an error and returns on failure
-   # if an unknown flag was passed.
-   case "$2" in
-      --repo-cli-directory)               location_identifier='Repository CLI-directory:'        ;;
-      --cli-command)                      location_identifier='CLI-command:'                     ;;
-      --cli-uninstaller)                  location_identifier='CLI-uninstaller:'                 ;;
-      --cli-scripts)                      location_identifier='CLI-scripts:'                     ;;
-      --cli-utilities)                    location_identifier='CLI-utilities:'                   ;;
-      --cli-command-destination)          location_identifier='CLI-command destination:'         ;;
-      --cli-supporting-files-destination) location_identifier='CLI-supporting files destination:';;
-      --arduino-cli-source)               location_identifier='Arduino-CLI source:'              ;;
-      --arduino-cli-destination)          location_identifier='Arduino-CLI destination:'         ;;
-      *)
-         echo "Error: \`${FUNCNAME[0]}\` received invalid flag \"$2\"" >&2
-         return 1 ;;
-   esac
-
-   # Gets the lines matched in the location-file for the given identifier, or returns on failure if
-   # that operation fails.
-   local -r raw_paths=`lines_after_unique_ "$location_identifier" "$1"` || return 2
-
-   # Performs explicit tilde expansion and prints the resulting paths.
-   while read path; do
-      [ "${path:0:1}" = '~' ] && echo "$HOME${path:1}" || echo "$path"
-   done <<< "$raw_paths"
-
-   return 0
-}
-
 # Returns on failure if a given <string> is not a path to an existing readable file.
 # If the <flag> is passed as last argument, the file is is also checked for the ".ino"-extension.
 #
@@ -307,24 +175,4 @@ function succeed_on_approval_ {
          'n'|'N') return 1 ;;
       esac
    done
-}
-
-# TODO: tty is preferable
-# Prints out a given list of device paths, having merged any "tty"-prefixed device onto a
-# corresponding "cu"-prefixed device (if one exists).
-#
-# Arguments:
-# <list of device paths>
-function merge_tty_onto_cu {
-   # Prints all of the devices whose name does not start with "tty".
-   egrep -v '^tty' <<< "$1"
-
-   # Iterates over all of the devices starting with "tty", adding only those "tty"-devices to the
-   # final devices that do not have an equivalent "cu"-device.
-   egrep '^tty' <<< "$1" | while read -r tty_device; do
-      # Prints the "tty"-device if there is no matching "cu"-device.
-      egrep -q "^\s*${tty_device/tty/cu}\s*\$" <<< "$1" || echo "$tty_device"
-   done
-
-   return 0
 }

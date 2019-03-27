@@ -63,7 +63,6 @@ if [ -z "$usb_devices" ]; then
    exit 3 #RS=3
 fi
 
-# TODO: does this make sense
 # Merges "cu"- and "tty"-devices.
 readonly possible_devices=`merge_tty_onto_cu "$usb_devices"`
 

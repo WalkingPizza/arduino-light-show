@@ -18,9 +18,12 @@
 
 
 # Gets the directory of this script.
-dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
+_dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 # Imports CLI utilities.
-. "$dot/../Utilities/utilities.sh"
+. "$_dot/../Libraries/utilities.sh"
+. "$_dot/../Libraries/constants.sh"
+# (Re)sets the dot-variable after imports.
+dot="$_dot"
 
 
 #-Constants-------------------------------------#
@@ -66,12 +69,19 @@ succeed_on_approval_ || exit 3 #RS=3
 # CLI"-flag is set.
 if $should_uninstall_arduino_cli; then
    echo 'Uninstalling Arduino CLI...'
+
+   # Gets the FQBN of the Arduino UNO.
+   local -r uno_fqbn=`name_of_ --arduino-uno-fbqn`
+   # Uninstalls the Arduino-UNO board core.
+   silently- arduino-cli core install "$uno_fqbn"
+
+   # Moves the Arduino CLI to the trash.
    silently- mv -f "`location_of_ --arduino-cli-destination`" "$trash"
 fi
 
 echo 'Uninstalling Arduino Light Show CLI...'
 # Deletes the CLI script as specified by <utility file: file locations>.
-silently- mv -f "`location_of_ --cli-command-destination`/`location_of_ --cli-command`" "$trash"
+silently- mv -f "`location_of_ --cli-command-destination`/`name_of_ --cli-command`" "$trash"
 
 # Gets the name of the CLI's supporting file directory folder.
 readonly cli_supporing_files_folder=$(basename "$(location_of_ --cli-supporting-files-destination)")
