@@ -67,7 +67,11 @@ function _assert_correct_argument_count_ {
    [ "$2" -ge "$expected_minimum" -a "$2" -le "$expected_maximum" ] && return 0
 
    # Prints a different error message if the <expected number of command line arguments> is `0`.
-   [ "$3" -eq 0 ] && echo "Usage: \`$1\` expects no arguments" >&2 || echo "Usage: $1 $4" >&2
+   if [ "$3" -eq 0 ]; then
+      echo -e "Usage: $print_yellow$1$print_normal expects no arguments" >&2
+   else
+      echo -e "Usage: $print_yellow$1$print_normal $4" >&2
+   fi
    echo "Consult the script's source for further documentation." >&2
 
    return 1

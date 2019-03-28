@@ -26,7 +26,7 @@ dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
 
 # Prints all of the lines of <file> immediately following the line containing only <string> upto the
-# next empty line. It is expected for there to be exactly one line containing only <string>.
+# next empty line or EOF. It is expected for there to be exactly one line containing only <string>.
 # If the "--until"-flag and a following <delimiter> are passed, all lines are printed upto the next
 # line only containing <delimiter>.
 #
@@ -41,6 +41,7 @@ dot=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 # 1: <flag> was invalid
 # 2: <delimiter> was invalid (not passed)
 # 3: there were less or more than one line exactly matching <string> in <file>
+# 4: a custom <delimiter> was given, but never reached in <file>
 function _lines_after_unique_ {
    # If a flag was passed, makes sure it is valid and a delimiter was passed, or prints an error and
    # returns on failure. A flag is also set in the process, indicating whether a <flag> was passed.
@@ -75,15 +76,18 @@ function _lines_after_unique_ {
    local -r list_start=$[`cut -d : -f 1 <<< "$match_line"` + 1]
 
    # Prints all of the lines in <file> starting from "$list_start", until the delimiter line is
-   # reached.
-   # TODO: Return on failure if a custom delimiter is never reached
+   # reached. If a custom delimiter is read, this is remembered by setting a flag.
+   havent_read_custom_delimiter=true
    tail -n "+$list_start" "$2" | while read -r line; do
       if $custom_delimiter; then
-         [ "$line" != "$4" ] && echo "$line" || break
+         [ "$line" = "$4" ] && { havent_read_custom_delimiter=false; break; } || echo "$line"
       else
          [ -n "$line" ] && echo "$line" || break
       fi
    done
+
+   # Makes sure a return on failure occurs if a custom delimiter was passed, but never read.
+   $custom_delimiter && $havent_read_custom_delimiter && return 4
 
    return 0
 }
@@ -129,6 +133,8 @@ function _message_for_ {
          message_identifier='configure_thresholds.sh: No Arduino:' ;;
       --ct-multiple-arduinos)
          message_identifier='configure_thresholds.sh: Multiple Arduinos:' ;;
+      --lcli-usage)
+         message_identifier='lightshow-cli: Usage:' ;;
       *)
          echo "Error: \`${FUNCNAME[0]}\` received invalid flag \"$2\"" >&2
          return 1 ;;

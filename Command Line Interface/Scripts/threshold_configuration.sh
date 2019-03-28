@@ -9,7 +9,7 @@
 # <utility file: regular expressions>, where now two entries have the same microphone-identifier.
 #
 # Arguments:
-# * <.ino file>
+# * <.ino file> optional, for testing purposes
 #
 # Return status:
 # 0: success
@@ -36,8 +36,14 @@ dot="$_dot"
 
 # The function wrapping all constant-declarations for this script.
 function declare_constants {
-   # Binds command line arguments.
-   readonly ino_file=$1
+   # Sets the location of the <.ino file> as the first command line argument, or to the one
+   # specified by <utility file: file locations> if none was passed.
+   if [ -n "$1" ]; then
+      readonly ino_file=$1
+   else
+      local -r program_folder="$dot/../../`location_of_ --repo-program-directory`"
+      readonly ino_file="$program_folder/`ls -1 "$program_folder" | egrep '\.ino$'`"
+   fi
 }
 
 
@@ -252,7 +258,7 @@ function threshold_values_in_ {
 
 #-Main------------------------------------------#
 
-assert_correct_argument_count_ 1 '<.ino file>' || exit 1 #RS=1
+assert_correct_argument_count_ 0 1 '<.ino file: optional>' || exit 1 #RS=1
 declare_constants "$@"
 
 # Makes sure the given file is valid, or returns on failure.

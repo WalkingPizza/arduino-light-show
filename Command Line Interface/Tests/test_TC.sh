@@ -41,9 +41,6 @@ function cleanup {
 
 # Test: Usage
 
-silently- "$test_command"
-report_if_last_status_was 1
-
 silently- "$test_command" 1 2
 report_if_last_status_was 1
 

@@ -3,7 +3,7 @@
 # This script is used to run all test-files in the directory of this script. A test-file is any file
 # whose name starts with "test_".
 
-# TODO: Add unit tests for `arduino_trait.sh` and utility-functions
+# TODO: Add test suites for `push_program.sh` and library-functions.
 
 
 # Gets the directory of this script.

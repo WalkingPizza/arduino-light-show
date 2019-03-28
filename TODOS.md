@@ -3,23 +3,23 @@
    
 ---
 ### `apply_configuration.sh`:
-* line 170: Remove any uses of "threshold_declaration_[n >= number of declarations]_value"
+* line 17: Increases the space after the threshold-declarations each time. Fix that.
+* line 180: Remove any uses of "threshold_declaration_[n >= number of declarations]_value".
 ---
 ### `arduino_trait.sh`:
-* line 14: This is slow, so allow multiple flags at once
----
-### `constants.sh`:
-* line 79:    Return on failure if a custom delimiter is never reached
+* line 15: This is slow, so allow multiple flags at once.
 ---
 ### `installer.sh`:
-* line 23: Add a different "supporting files" destination for Linux
----
-### `lightshow-cli`:
-* line 3: Unfinished
-* line 45:    Implement
+* line 23: Add a different "supporting files" destination for (Windows Subsystem for) Linux.
 ---
 ### `run_tests.sh`:
-* line 6: Add unit tests for `arduino_trait.sh` and utility-functions
+* line 6: Add test suites for `push_program.sh` and library-functions.
+---
+### `test_AT.sh`:
+* line 3: Add more tests.
+---
+### `test_CT.sh`:
+* line 3: Add more tests.
 ---
 ### `test_utilities.sh`:
-* line 108: Iron out the race conditions by having some kind of detection of input being read/expected.
+* line 127: Iron out the race conditions by having some kind of detection of input being read/expected.

@@ -28,21 +28,40 @@ shopt -s expand_aliases
 
 # Prints a description about whether the test with a given identifier succeeded based on whether the
 # last return status corresponds to an expected value or not.
+# If a "--conditional"-flag is passed, the ouput is printed in yellow, to signify that it should not
+# be taken at face value.
 #
 # Arguments:
 # * <test-identifier> passed automatically as the current line number by the alias
+# * <flag> optional, possible values: "--conditional"
 # * <expected return status>
 # * <last return status> optional, is set as $? if not passed explicitly
 alias report_if_last_status_was='_report_if_last_status_was "Line $LINENO" '
 function _report_if_last_status_was {
-   # Secures the last return status, unless it was explicitly passed as argument.
-   local return_status=$?; [ -n "$3" ] && return_status=$3
+   # Secures the last return status.
+   local return_status=$?
+
+   # Sets a flag indicating whether the "--conditional"-flag was passed.
+   [ "$2" = '--conditional' ] && local -r is_conditional=true || local -r is_conditional=false
+
+   # Captures the function's arguments and printing color differently, depending on whether the
+   # "--conditional"-flag was passed.
+   if $is_conditional; then
+      [ -n "$4" ] && return_status=$4
+      local -r expected_return_status=$3
+      local -r ok_color=$print_yellow; local -r bad_color=$print_yellow;
+   else
+      [ -n "$3" ] && return_status=$3
+      local -r expected_return_status=$2
+      local -r ok_color=$print_green; local -r bad_color=$print_red;
+   fi
 
    # Prints a message depending on whether <last return status> has the expected value or not.
-   if [ "$return_status" -eq "$2" ]; then
-      echo -e "> $print_green$1\tOK$print_normal"
+   if [ "$return_status" -eq "$expected_return_status" ]; then
+      echo -e "◦ $ok_color$1\tOK$print_normal"
    else
-      echo -e "> $print_red$1\tNO: Expected return status $2, but got $return_status$print_normal"
+      echo -ne "◦ $bad_color$1\tNO: Expected return status $expected_return_status, "
+      echo -e  "but got $return_status$print_normal"
    fi
 
    return 0
@@ -76,9 +95,9 @@ function _report_if_output_matches {
 
    # Prints a message depending on whether the output matched or not (as determined above).
    if $output_matches; then
-      echo -e "> $print_green$2\tOK$print_normal"
+      echo -e "◦ $print_green$2\tOK$print_normal"
    else
-      echo -e "> $print_red$2\tNO: Expected different output$print_normal"
+      echo -e "◦ $print_red$2\tNO: Expected different output$print_normal"
    fi
 
    return 0

@@ -20,7 +20,7 @@
 # 3: the CLI-script has a malformed or no "CLI supporing files folder"-declaration
 # 4: the installation of the Arduino-CLI failed
 
-# TODO: Add a different "supporting files" destination for Linux
+# TODO: Add a different "supporting files" destination for (Windows Subsystem for) Linux.
 
 
 #-Constants-------------------------------------#
@@ -212,8 +212,10 @@ function complete_cli_script_ {
 
    local -r completed_declaration="$folder_declaration_prefix'$cli_supporing_files_destination'"
 
+   # Removes the previous folder declaration from the CLI-script.
+   sed -i -e "${folder_line_number}d" "$cli_script"
    # Replaces the previous folder declaration in the CLI-script with the completed one.
-   ex -s -c "${folder_declaration_line}i|$completed_declaration" -c 'x' "$cli_script"
+   ex -s -c "${folder_line_number}i|$completed_declaration" -c 'x' "$cli_script"
 
    return 0
 }
@@ -265,13 +267,16 @@ function install_lightshow_cli {
    while read directory; do mv "$directory" "$cli_supporing_files_destination"; done << END
 $repository_folder/$repository_cli_directory/$(location_of_ --cli-scripts-directory)
 $repository_folder/$repository_cli_directory/$(location_of_ --cli-uninstaller)
-$repository_folder/$repository_cli_directory/$(name_of_ --cli-command)
 $repository_folder/$(location_of_ --repo-program-directory)
 END
 
+   # Moves the cli-command to its destination.
+   mv "$repository_folder/$repository_cli_directory/$(name_of_ --cli-command)" \
+      "`location_of_ --cli-command-destination`"
+
    # Copies the libraries-directory to the CLI's supporting files folder. Moving the libraries
    # directory could disrupt the further execution of this script.
-   cp "$repository_folder/$repository_cli_directory/`location_of_ --cli-libraries-directory`" \
+   cp -r "$repository_folder/$repository_cli_directory/`location_of_ --cli-libraries-directory`" \
       "$cli_supporing_files_destination"
 
    echo 'Installed Arduino Light Show CLI.'

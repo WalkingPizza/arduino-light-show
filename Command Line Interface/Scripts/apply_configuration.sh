@@ -5,7 +5,7 @@
 #
 # Arguments:
 # * <configuration file>
-# * <.ino file>
+# * <.ino file> optional, for testing purposes
 #
 # Return status:
 # 0: success
@@ -13,6 +13,8 @@
 # 2: a given file was not readable or has the wrong file type
 # 3: an entry in <configuration file> is malformed
 # 4: <configuration file> contains duplicate microphone-identifiers
+
+# TODO: Increases the space after the threshold-declarations each time. Fix that.
 
 
 #-Preliminaries---------------------------------#
@@ -34,7 +36,15 @@ dot="$_dot"
 function declare_constants {
    # Binds command line arguments.
    readonly configuration_file=$1
-   readonly ino_file=$2
+
+   # Sets the location of the <.ino file> as the first command line argument, or to the one
+   # specified by <utility file: file locations> if none was passed.
+   if [ -n "$2" ]; then
+      readonly ino_file=$2
+   else
+      local -r program_folder="$dot/../../`location_of_ --repo-program-directory`"
+      readonly ino_file="$program_folder/`ls -1 "$program_folder" | egrep '\.ino$'`"
+   fi
 }
 
 
@@ -139,7 +149,7 @@ function threshold_declarations_for_configuration {
 #-Main------------------------------------------#
 
 
-assert_correct_argument_count_ 2 '<configuration file> <.ino file>' || exit 1 #RS=1
+assert_correct_argument_count_ 1 2 '<configuration file> <.ino file: optional>' || exit 1 #RS=1
 declare_constants "$@"
 
 # Makes sure the given files are valid and wellformed, or returns on failure.
@@ -167,4 +177,4 @@ readonly new_declarations=`threshold_declarations_for_configuration "$configurat
 # Inserts the generated declarations at the insertion point.
 ex -s -c "${declaration_insertion_point}i|$new_declarations" -c 'x' "$ino_file"
 
-# TODO: Remove any uses of "threshold_declaration_[n >= number of declarations]_value"
+# TODO: Remove any uses of "threshold_declaration_[n >= number of declarations]_value".

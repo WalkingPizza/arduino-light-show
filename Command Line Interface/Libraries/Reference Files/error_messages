@@ -17,7 +17,6 @@ RED>The specified configuration contains malformed entries.NORMAL>
 
 Entries must have the form:
 YELLOW><microphone-identifier>: <threshold-value>NORMAL>
-
 The characters YELLOW>"NORMAL> and YELLOW>:NORMAL> may not be used in \
 YELLOW><microphone-identifier>NORMAL>s.
 The YELLOW><threshold-value>NORMAL> must be an integer not starting with a YELLOW>0NORMAL> \
@@ -31,7 +30,6 @@ RED>The specified configuration contains duplicate microphone-identifiers.NORMAL
 
 Entries must have the form:
 YELLOW><microphone-identifier>: <threshold-value>NORMAL>
-
 No two YELLOW><microphone-identifier>NORMAL>s may be identical.
 MESSAGE-END
 
@@ -49,4 +47,18 @@ configure_thresholds.sh: Multiple Arduinos:
 RED>Multiple Arduinos connected to this computer were found.NORMAL>
 
 Please disconnect all but one device.
+MESSAGE-END
+
+
+
+lightshow-cli: Usage:
+RED>Invalid argument.NORMAL>
+
+The Arduino Light Show CLI supports the following subcommands (with arguments in YELLOW><>NORMAL>):
+◦ YELLOW>uninstall NORMAL>
+◦ YELLOW>arduino-trait NORMAL><trait flag> NORMAL>
+◦ YELLOW>get-configuration NORMAL>
+◦ YELLOW>apply-configuration NORMAL><configuration file>
+◦ YELLOW>push-program NORMAL>
+◦ YELLOW>configure-thresholds NORMAL>
 MESSAGE-END
